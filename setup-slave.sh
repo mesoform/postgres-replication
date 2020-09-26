@@ -1,9 +1,6 @@
 #!/usr/bin/env bash
 
-if ! ${PG_SLAVE:-false}; then
-  echo "\$PG_SLAVE not set. Exiting master DB setup"
-  exit 0
-fi
+[[ ! ${PG_SLAVE^^} = TRUE ]] && exit 0
 
 PG_REP_PASSWORD=$(cat "${PG_REP_PASSWORD_FILE}")
 

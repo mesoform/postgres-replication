@@ -5,6 +5,8 @@ export HBA_ADDRESS=$HBA_ADDRESS
 export POSTGRES_USER=$POSTGRES_USER
 export POSTGRES_DB=$POSTGRES_DB
 export PG_REP_USER=$PG_REP_USER
+export PG_MASTER=${PG_MASTER:false}
+export PG_SLAVE=${PG_SLAVE:false}
 
 function update_conf () {
   repl=$1
@@ -12,7 +14,7 @@ function update_conf () {
   config_file=$PGDATA/postgresql.conf
 
   # Check if configuration file exists. If not, it probably means that database is not initialized yet
-  if [ ! -f $config_file ]; then
+  if [ ! -f "$config_file" ]; then
     return
   fi
 
@@ -30,10 +32,16 @@ function update_conf () {
 
     docker_setup_env
     docker_temp_server_start
-    bash /docker-entrypoint-initdb.d/setup-master.sh
+    [[ ${PG_MASTER^^} = TRUE ]] && /docker-entrypoint-initdb.d/setup-master.sh
+    [[ ${PG_SLAVE^^} = TRUE ]] && /docker-entrypoint-initdb.d/setup-slave.sh
     docker_temp_server_stop
   fi
 }
+
+if [[ $PG_MASTER == TRUE && $PG_SLAVE == TRUE ]];
+  echo "Both \$PG_MASTER and \$PG_SLAVE cannot be true"
+  exit1
+fi
 
 if [ "$(id -u)" = '0' ]; then
   # then restart script as postgres user
