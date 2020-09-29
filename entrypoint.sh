@@ -38,9 +38,9 @@ function update_conf () {
   fi
 }
 
-if [[ $PG_MASTER == TRUE && $PG_SLAVE == TRUE ]];
+if [[ $PG_MASTER == TRUE && $PG_SLAVE == TRUE ]]; then
   echo "Both \$PG_MASTER and \$PG_SLAVE cannot be true"
-  exit1
+  exit 1
 fi
 
 if [ "$(id -u)" = '0' ]; then

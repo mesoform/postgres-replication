@@ -1,4 +1,4 @@
-FROM postgres:10.6
+FROM postgres:13-alpine
 
 # Add replication script
 COPY setup-master.sh /docker-entrypoint-initdb.d/
