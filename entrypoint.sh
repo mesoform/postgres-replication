@@ -23,7 +23,7 @@ function update_conf () {
   sed -i "s/archive_mode =.*$//g" $config_file
   sed -i "s/archive_command =.*$//g" $config_file
   sed -i "s/max_wal_senders =.*$//g" $config_file
-  sed -i "s/wal_keep_segments =.*$//g" $config_file
+  sed -i "s/wal_keep_size =.*$//g" $config_file
   sed -i "s/hot_standby =.*$//g" $config_file
   sed -i "s/synchronous_standby_names =.*$//g" $config_file
 
@@ -32,13 +32,12 @@ function update_conf () {
 
     docker_setup_env
     docker_temp_server_start
-    [[ ${PG_MASTER^^} = TRUE ]] && /docker-entrypoint-initdb.d/setup-master.sh
-    [[ ${PG_SLAVE^^} = TRUE ]] && /docker-entrypoint-initdb.d/setup-slave.sh
+    /docker-entrypoint-initdb.d/setup-master.sh
     docker_temp_server_stop
   fi
 }
 
-if [[ $PG_MASTER == TRUE && $PG_SLAVE == TRUE ]]; then
+if [[ "$PG_MASTER" == true && "$PG_SLAVE" == true ]]; then
   echo "Both \$PG_MASTER and \$PG_SLAVE cannot be true"
   exit 1
 fi
@@ -55,8 +54,14 @@ fi
 if [ "$1" = 'postgres' ]; then
   repl_enable=true
 
-  # Update postgresql configuration
-  update_conf $repl_enable
+  if [ "$PG_MASTER" == true ]; then
+    # Update postgresql configuration
+    update_conf $repl_enable
+  elif [ "$PG_SLAVE" == true ]; then
+    /docker-entrypoint-initdb.d/setup-slave.sh
+  else
+    echo "\$PG_MASTER or \$PG_SLAVE need to be true"
+  fi
 
   # Run the postgresql entrypoint
   bash /usr/local/bin/docker-entrypoint.sh postgres

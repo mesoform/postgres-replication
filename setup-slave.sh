@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-[[ ! ${PG_SLAVE^^} = TRUE ]] && exit 0
+[[ ! ${PG_SLAVE^^} = true ]] && exit 0
 
 PG_REP_PASSWORD=$(cat "${PG_REP_PASSWORD_FILE}")
 
@@ -19,13 +19,11 @@ echo "host replication all ${HBA_ADDRESS} md5" >> "$PGDATA/pg_hba.conf"
 
 set -e
 
-cat > "${PGDATA}"/recovery.conf <<EOF
-standby_mode = on
+touch "${PGDATA}"/standby.signal
+
+cat > "${PGDATA}"/postgresql.conf <<EOF
 primary_conninfo = 'host=$PG_MASTER_HOST port=${PG_MASTER_PORT:-5432} user=$PG_REP_USER password=$PG_REP_PASSWORD'
-trigger_file = '/tmp/touch_me_to_promote_to_me_master'
 EOF
 chown postgres. "${PGDATA}" -R
 chmod 700 "${PGDATA}" -R
 fi
-
-sed -i 's/wal_level = hot_standby/wal_level = replica/g' "${PGDATA}"/postgresql.conf
