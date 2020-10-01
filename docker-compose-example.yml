@@ -4,10 +4,11 @@ secrets:
     external: true
 services:
   pg_master:
-    image: mesoform/pg10master
+    image: mesoform/postgres-ha
     volumes:
       - pg_data:/var/lib/postgresql/data
     environment:
+      - PG_MASTER=true
       - POSTGRES_USER=testuser
       - POSTGRES_PASSWORD=123456
       - POSTGRES_DB=testdb
@@ -26,10 +27,10 @@ services:
       placement:
         constraints:
         - node.labels.type == primary
-        - node.role == manager
   pg_slave:
-    image: mesoform/pg10slave
+    image: mesoform/postgres-ha
     environment:
+      - PG_SLAVE=true
       - POSTGRES_USER=testuser
       - POSTGRES_PASSWORD=123456
       - POSTGRES_DB=testdb
@@ -47,7 +48,6 @@ services:
       placement:
         constraints:
         - node.labels.type != primary
-        - node.role == manager
 networks:
   default:
 
