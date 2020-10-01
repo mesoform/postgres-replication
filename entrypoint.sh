@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/bash
 
 export PG_REP_PASSWORD_FILE=$PG_REP_PASSWORD_FILE
 export HBA_ADDRESS=$HBA_ADDRESS
@@ -43,8 +43,6 @@ if [[ "$PG_MASTER" == true && "$PG_SLAVE" == true ]]; then
 fi
 
 if [ "$(id -u)" = '0' ]; then
-  sed -i 's/\/bin\/ash/\/bin\/bash/g' /etc/passwd
-  sed -i 's/\/bin\/sh/\/bin\/bash/g' /etc/passwd
   # then restart script as postgres user
   exec su-exec postgres "$BASH_SOURCE" "$@"
 fi
