@@ -1,5 +1,8 @@
 FROM postgres:13-alpine
 
+RUN apk add --update iputils
+RUN apk add --update htop
+
 # Add replication script
 COPY setup-master.sh /docker-entrypoint-initdb.d/
 COPY setup-slave.sh /docker-entrypoint-initdb.d/
