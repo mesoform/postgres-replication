@@ -43,6 +43,8 @@ if [[ "$PG_MASTER" == true && "$PG_SLAVE" == true ]]; then
 fi
 
 if [ "$(id -u)" = '0' ]; then
+  sed -i 's/\/bin\/ash/\/bin\/bash/g' /etc/passwd
+  sed -i 's/\/bin\/sh/\/bin\/bash/g' /etc/passwd
   # then restart script as postgres user
   exec su-exec postgres "$BASH_SOURCE" "$@"
 fi
@@ -55,9 +57,10 @@ if [ "$1" = 'postgres' ]; then
   repl_enable=true
 
   if [ "$PG_MASTER" == true ]; then
-    # Update postgresql configuration
+    echo "Update postgresql master configuration"
     update_conf $repl_enable
   elif [ "$PG_SLAVE" == true ]; then
+    echo "Update postgresql slave configuration"
     /docker-entrypoint-initdb.d/setup-slave.sh
   else
     echo "\$PG_MASTER or \$PG_SLAVE need to be true"

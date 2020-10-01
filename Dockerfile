@@ -5,7 +5,6 @@ COPY setup-master.sh /docker-entrypoint-initdb.d/
 COPY setup-slave.sh /docker-entrypoint-initdb.d/
 RUN chmod +x /docker-entrypoint-initdb.d/*
 
-
 COPY entrypoint.sh /
 RUN chmod +x /entrypoint.sh
 #Healthcheck to make sure container is ready

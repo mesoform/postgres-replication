@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
 
-[[ ! ${PG_MASTER^^} = true ]] && exit 0
-
 PG_REP_PASSWORD=$(cat "${PG_REP_PASSWORD_FILE}")
 
 set -e
