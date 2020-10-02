@@ -1,4 +1,4 @@
-FROM postgres:13-alpine
+FROM postgres:12.4-alpine
 
 RUN apk add --update iputils
 RUN apk add --update htop

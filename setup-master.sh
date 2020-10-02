@@ -27,7 +27,7 @@ echo "host replication all ${HBA_ADDRESS} md5" >> "$PGDATA/pg_hba.conf"
   echo "archive_mode = on"
   echo "archive_command = 'cd .'"
   echo "max_wal_senders = 5"
-  echo "wal_keep_size = 512"
+  echo "wal_keep_segments = 32"
   echo "hot_standby = on"
   echo "synchronous_standby_names = '*'"
 } >> $PGDATA/postgresql.conf
