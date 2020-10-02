@@ -4,7 +4,7 @@ secrets:
     external: true
 services:
   pg_master:
-    image: mesoform/postgres-ha
+    image: mesoform/postgres-ha:12-latest
     volumes:
       - pg_data:/var/lib/postgresql/data
     environment:
@@ -28,7 +28,7 @@ services:
         constraints:
         - node.labels.type == primary
   pg_slave:
-    image: mesoform/postgres-ha
+    image: mesoform/postgres-ha:12-latest
     environment:
       - PG_SLAVE=true
       - POSTGRES_USER=testuser
