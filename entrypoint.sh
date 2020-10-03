@@ -8,7 +8,7 @@ export PG_REP_USER=$PG_REP_USER
 export PG_MASTER=${PG_MASTER:false}
 export PG_SLAVE=${PG_SLAVE:false}
 if ${PG_PASSWORD_FILE}; then
-  export POSTGRES_PASSWORD=$(cat "${PG_REP_PASSWORD_FILE}")
+  export POSTGRES_PASSWORD=$(cat "${PG_PASSWORD_FILE}")
 fi
 
 function update_conf () {
