@@ -47,7 +47,6 @@ if [[ ${PG_MASTER^^} == TRUE && ${PG_SLAVE^^} == TRUE ]]; then
 fi
 
 if [ "$(id -u)" = '0' ]; then
-  chown postgres "${PG_PASSWORD_FILE}"
   # then restart script as postgres user
   # shellcheck disable=SC2128
   exec su-exec postgres "$BASH_SOURCE" "$@"
