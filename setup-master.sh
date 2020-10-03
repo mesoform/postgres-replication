@@ -30,4 +30,4 @@ echo "host replication all ${HBA_ADDRESS} md5" >> "$PGDATA/pg_hba.conf"
   echo "wal_keep_size = 512"
   echo "hot_standby = on"
   echo "synchronous_standby_names = '*'"
-} >> $PGDATA/postgresql.conf
+} >> "$PGDATA"/postgresql.conf
