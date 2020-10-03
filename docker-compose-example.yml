@@ -1,26 +1,24 @@
-version: '3.4'
-
-
+version: "3.3"
 secrets:
   db_replica_password:
     external: true
   db_password:
     external: true
-
-
 services:
-  database:
+  pg_master:
     image: mesoform/postgres-ha
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    environment:
+      - PG_MASTER=true
+      - POSTGRES_USER=testuser
+      - PG_PASSWORD_FILE=/run/secrets/db_password
+      - POSTGRES_DB=testdb
+      - PG_REP_USER=testrep
+      - PG_REP_PASSWORD_FILE=/run/secrets/db_replica_password
+      - HBA_ADDRESS=10.0.0.0/8
     ports:
       - "5432:5432"
-    environment:
-      PG_MASTER: "true"
-      POSTGRES_USER: postgres
-      PG_PASSWORD_FILE: /run/secrets/db_password
-      POSTGRES_DB: tableturn_dev
-      PG_REP_USER: repl_user
-      PG_REP_PASSWORD_FILE: /run/secrets/db_replica_password
-      HBA_ADDRESS: 10.0.0.0/8
     secrets:
       - source: db_replica_password
         uid: "70"
@@ -30,28 +28,27 @@ services:
         uid: "70"
         gid: "70"
         mode: 0550
-    volumes:
-      - pg_data:/var/lib/postgresql/data
+    networks:
+      default:
+        aliases:
+          - pg_cluster
     deploy:
       placement:
         constraints:
         - node.labels.type == primary
-    networks:
-      default:
-        aliases:
-          - pg_cluster
-
-  pg_replica:
+  pg_slave:
     image: mesoform/postgres-ha
+    volumes:
+      - pg_replica:/var/lib/postgresql/data
     environment:
-      PG_SLAVE: "true"
-      POSTGRES_USER: postgres
-      PG_PASSWORD_FILE: /run/secrets/db_password
-      POSTGRES_DB: tableturn_dev
-      PG_REP_USER: repl_user
-      PG_REP_PASSWORD_FILE: /run/secrets/db_replica_password
-      PG_MASTER_HOST: database
-      HBA_ADDRESS: 10.0.0.0/8
+      - PG_SLAVE=true
+      - POSTGRES_USER=testuser
+      - PG_PASSWORD_FILE=/run/secrets/db_password
+      - POSTGRES_DB=testdb
+      - PG_REP_USER=testrep
+      - PG_REP_PASSWORD_FILE=/run/secrets/db_replica_password
+      - PG_MASTER_HOST=pg_master  # This needs to be the swarm node private IP instead of the service name (pg_master) which resolves to the service IP
+      - HBA_ADDRESS=10.0.0.0/8
     secrets:
       - source: db_replica_password
         uid: "70"
@@ -61,27 +58,18 @@ services:
         uid: "70"
         gid: "70"
         mode: 0550
-    volumes:
-      - pg_data_replica:/var/lib/postgresql/data
-    deploy:
-      placement:
-        constraints:
-        - node.labels.type != primary
     networks:
       default:
         aliases:
           - pg_cluster
-
-  queue:
-    image: redis:latest
-    ports:
-      - "6379:6379"
-
+    deploy:
+      placement:
+        constraints:
+        - node.labels.type != primary
+networks:
+  default:
 
 volumes:
   pg_data:
-  pg_data_replica:
+  pg_replica:
 
-
-networks:
-  default:
