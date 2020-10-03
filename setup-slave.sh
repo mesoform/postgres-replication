@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/bash
 
 [[ ! ${PG_SLAVE^^} = TRUE ]] && exit 0
 
