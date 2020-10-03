@@ -7,6 +7,11 @@ export POSTGRES_DB=$POSTGRES_DB
 export PG_REP_USER=$PG_REP_USER
 export PG_MASTER=${PG_MASTER:false}
 export PG_SLAVE=${PG_SLAVE:false}
+if [[ -n "${PG_PASSWORD_FILE}" ]]; then
+  echo "Using password file"
+  POSTGRES_PASSWORD=$(cat "${PG_PASSWORD_FILE}")
+  export POSTGRES_PASSWORD
+fi
 
 function update_conf () {
   repl=$1
@@ -19,13 +24,13 @@ function update_conf () {
   fi
 
   # Reinitialize config
-  sed -i "s/wal_level =.*$//g" $config_file
-  sed -i "s/archive_mode =.*$//g" $config_file
-  sed -i "s/archive_command =.*$//g" $config_file
-  sed -i "s/max_wal_senders =.*$//g" $config_file
-  sed -i "s/wal_keep_size =.*$//g" $config_file
-  sed -i "s/hot_standby =.*$//g" $config_file
-  sed -i "s/synchronous_standby_names =.*$//g" $config_file
+  sed -i "s/wal_level =.*$//g" "$config_file"
+  sed -i "s/archive_mode =.*$//g" "$config_file"
+  sed -i "s/archive_command =.*$//g" "$config_file"
+  sed -i "s/max_wal_senders =.*$//g" "$config_file"
+  sed -i "s/wal_keep_size =.*$//g" "$config_file"
+  sed -i "s/hot_standby =.*$//g" "$config_file"
+  sed -i "s/synchronous_standby_names =.*$//g" "$config_file"
 
   if [ "$repl" = true ] ; then
     source /usr/local/bin/docker-entrypoint.sh
@@ -37,13 +42,14 @@ function update_conf () {
   fi
 }
 
-if [[ "$PG_MASTER" == true && "$PG_SLAVE" == true ]]; then
+if [[ ${PG_MASTER^^} == TRUE && ${PG_SLAVE^^} == TRUE ]]; then
   echo "Both \$PG_MASTER and \$PG_SLAVE cannot be true"
   exit 1
 fi
 
 if [ "$(id -u)" = '0' ]; then
   # then restart script as postgres user
+  # shellcheck disable=SC2128
   exec su-exec postgres "$BASH_SOURCE" "$@"
 fi
 
@@ -54,16 +60,16 @@ fi
 if [ "$1" = 'postgres' ]; then
   repl_enable=true
 
-  if [ "$PG_MASTER" == true ]; then
-    echo "Update postgresql master configuration"
+  if [[ ${PG_MASTER^^} == TRUE ]]; then
+    echo "Update postgres master configuration"
     update_conf $repl_enable
-  elif [ "$PG_SLAVE" == true ]; then
-    echo "Update postgresql slave configuration"
+  elif [[ ${PG_SLAVE^^} == TRUE ]]; then
+    echo "Update postgres slave configuration"
     /docker-entrypoint-initdb.d/setup-slave.sh
   else
     echo "\$PG_MASTER or \$PG_SLAVE need to be true"
   fi
 
-  # Run the postgresql entrypoint
+  # Run the postgres entrypoint
   bash /usr/local/bin/docker-entrypoint.sh postgres
 fi
