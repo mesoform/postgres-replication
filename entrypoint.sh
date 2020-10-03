@@ -7,7 +7,8 @@ export POSTGRES_DB=$POSTGRES_DB
 export PG_REP_USER=$PG_REP_USER
 export PG_MASTER=${PG_MASTER:false}
 export PG_SLAVE=${PG_SLAVE:false}
-if ${PG_PASSWORD_FILE}; then
+if [[ -n "${PG_PASSWORD_FILE}" ]]; then
+  echo "Using password file: ${PG_PASSWORD_FILE}"
   POSTGRES_PASSWORD=$(cat "${PG_PASSWORD_FILE}")
   export POSTGRES_PASSWORD
 fi
