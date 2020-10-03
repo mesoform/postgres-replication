@@ -1,55 +1,87 @@
-version: "3.3"
+version: '3.4'
+
+
 secrets:
   db_replica_password:
     external: true
+  db_password:
+    external: true
+
+
 services:
-  pg_master:
+  database:
     image: mesoform/postgres-ha
-    volumes:
-      - pg_data:/var/lib/postgresql/data
-    environment:
-      - PG_MASTER=true
-      - POSTGRES_USER=testuser
-      - POSTGRES_PASSWORD=123456
-      - POSTGRES_DB=testdb
-      - PG_REP_USER=testrep
-      - PG_REP_PASSWORD_FILE=/run/secrets/db_replica_password
-      - HBA_ADDRESS=10.0.0.0/8
     ports:
       - "5432:5432"
+    environment:
+      PG_MASTER: "true"
+      POSTGRES_USER: postgres
+      PG_PASSWORD_FILE: /run/secrets/db_password
+      POSTGRES_DB: tableturn_dev
+      PG_REP_USER: repl_user
+      PG_REP_PASSWORD_FILE: /run/secrets/db_replica_password
+      HBA_ADDRESS: 10.0.0.0/8
     secrets:
-      - db_replica_password
-    networks:
-      default:
-        aliases:
-          - pg_cluster
+      - source: db_replica_password
+        uid: "70"
+        gid: "70"
+        mode: 0550
+      - source: db_password
+        uid: "70"
+        gid: "70"
+        mode: 0550
+    volumes:
+      - pg_data:/var/lib/postgresql/data
     deploy:
       placement:
         constraints:
         - node.labels.type == primary
-  pg_slave:
-    image: mesoform/postgres-ha
-    environment:
-      - PG_SLAVE=true
-      - POSTGRES_USER=testuser
-      - POSTGRES_PASSWORD=123456
-      - POSTGRES_DB=testdb
-      - PG_REP_USER=testrep
-      - PG_REP_PASSWORD_FILE=/run/secrets/db_replica_password
-      - PG_MASTER_HOST=pg_master  # This needs to be the swarm node private IP instead of the service name (pg_master) which resolves to the service IP
-      - HBA_ADDRESS=10.0.0.0/8
-    secrets:
-      - db_replica_password
     networks:
       default:
         aliases:
           - pg_cluster
+
+  pg_replica:
+    image: mesoform/postgres-ha
+    environment:
+      PG_SLAVE: "true"
+      POSTGRES_USER: postgres
+      PG_PASSWORD_FILE: /run/secrets/db_password
+      POSTGRES_DB: tableturn_dev
+      PG_REP_USER: repl_user
+      PG_REP_PASSWORD_FILE: /run/secrets/db_replica_password
+      PG_MASTER_HOST: database
+      HBA_ADDRESS: 10.0.0.0/8
+    secrets:
+      - source: db_replica_password
+        uid: "70"
+        gid: "70"
+        mode: 0550
+      - source: db_password
+        uid: "70"
+        gid: "70"
+        mode: 0550
+    volumes:
+      - pg_data_replica:/var/lib/postgresql/data
     deploy:
       placement:
         constraints:
         - node.labels.type != primary
-networks:
-  default:
+    networks:
+      default:
+        aliases:
+          - pg_cluster
+
+  queue:
+    image: redis:latest
+    ports:
+      - "6379:6379"
+
 
 volumes:
   pg_data:
+  pg_data_replica:
+
+
+networks:
+  default:
