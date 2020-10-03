@@ -8,7 +8,7 @@ export PG_REP_USER=$PG_REP_USER
 export PG_MASTER=${PG_MASTER:false}
 export PG_SLAVE=${PG_SLAVE:false}
 if [[ -n "${PG_PASSWORD_FILE}" ]]; then
-  echo "Using password file: ${PG_PASSWORD_FILE}"
+  echo "Using password file"
   POSTGRES_PASSWORD=$(cat "${PG_PASSWORD_FILE}")
   export POSTGRES_PASSWORD
 fi
