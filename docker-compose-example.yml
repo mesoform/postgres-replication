@@ -72,3 +72,4 @@ networks:
 volumes:
   pg_data: {}
   pg_replica: {}
+
