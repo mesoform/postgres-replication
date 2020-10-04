@@ -1,4 +1,4 @@
-#!/bin/bash -x
+#!/bin/bash
 
 export PG_REP_PASSWORD_FILE=$PG_REP_PASSWORD_FILE
 export HBA_ADDRESS=$HBA_ADDRESS

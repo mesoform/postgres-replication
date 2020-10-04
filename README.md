@@ -13,6 +13,7 @@ secrets:
     external: true
   db_password:
     external: true
+
 services:
   pg_master:
     image: mesoform/postgres-ha
@@ -38,7 +39,7 @@ services:
         gid: "70"
         mode: 0550
     networks:
-      default:
+      database:
         aliases:
           - pg_cluster
     deploy:
@@ -56,7 +57,7 @@ services:
       - POSTGRES_DB=testdb
       - PG_REP_USER=testrep
       - PG_REP_PASSWORD_FILE=/run/secrets/db_replica_password
-      - PG_MASTER_HOST=pg_master
+      - PG_MASTER_HOST=pg_master  # This needs to be the swarm node private IP instead of the service name (pg_master) which resolves to the service IP
       - HBA_ADDRESS=10.0.0.0/8
     secrets:
       - source: db_replica_password
@@ -68,19 +69,21 @@ services:
         gid: "70"
         mode: 0550
     networks:
-      default:
+      database:
         aliases:
           - pg_cluster
     deploy:
       placement:
         constraints:
         - node.labels.type != primary
+
 networks:
-  default:
+  database: {}
 
 volumes:
   pg_data: {}
   pg_replica: {}
+
 
 ```
 

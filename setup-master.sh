@@ -1,4 +1,4 @@
-#!/bin/bash -x
+#!/bin/bash
 
 [[ ! ${PG_MASTER^^} == TRUE ]] && exit 0
 

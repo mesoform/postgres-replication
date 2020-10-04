@@ -1,4 +1,4 @@
-#!/bin/bash -x
+#!/bin/bash
 
 [[ ! ${PG_SLAVE^^} == TRUE ]] && exit 0
 [[ -f ${PGDATA}/standby.signal ]] && exit 0
