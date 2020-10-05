@@ -7,7 +7,10 @@
 * functional programming for shell scripts
 * hard-coded values should be avoided unless there is a good reason (I.e. for security)
 * tests should be in a directory named `tests`
-
+* install a suitable IDE formatting plugin and run it before pushing changes. I.e. On Jetbrains IDEs
+ there is Shell Script Formatter which should have be ran (with CTRL+ALT+L or CMD+OPT+L) on each
+ script 
+ 
 Feel free to ask any questions in issues or on this [email](mailto:support@mesoform.com).
 
 ### Code of Conduct
