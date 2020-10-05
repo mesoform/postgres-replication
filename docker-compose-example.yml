@@ -4,6 +4,7 @@ secrets:
     external: true
   db_password:
     external: true
+
 services:
   pg_master:
     image: mesoform/postgres-ha
@@ -29,7 +30,7 @@ services:
         gid: "70"
         mode: 0550
     networks:
-      default:
+      database:
         aliases:
           - pg_cluster
     deploy:
@@ -59,17 +60,17 @@ services:
         gid: "70"
         mode: 0550
     networks:
-      default:
+      database:
         aliases:
           - pg_cluster
     deploy:
       placement:
         constraints:
         - node.labels.type != primary
+
 networks:
-  default:
+  database: {}
 
 volumes:
-  pg_data:
-  pg_replica:
-
+  pg_data: {}
+  pg_replica: {}
