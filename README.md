@@ -4,7 +4,36 @@
 Postgres database image setup to be used with HA replication
 
 ## How to use
-See the example in docker-compose-example.yml. 
+Variables usage:
+
+To create a MASTER instance as part of a PostgreSQL HA setup set the following variables (set PG_MASTER to true):
+
+      - PG_MASTER=true
+      - POSTGRES_USER=testuser
+      - PG_PASSWORD_FILE=/run/secrets/db_password
+      - POSTGRES_DB=testdb
+      - PG_REP_USER=testrep
+      - PG_REP_PASSWORD_FILE=/run/secrets/db_replica_password
+      - HBA_ADDRESS=10.0.0.0/8
+      
+To create a REPLICA instance as part of a PostgreSQL HA setup set the following variables (set PG_SLAVE to true):
+
+      - PG_SLAVE=true
+      - POSTGRES_USER=testuser
+      - PG_PASSWORD_FILE=/run/secrets/db_password
+      - POSTGRES_DB=testdb
+      - PG_REP_USER=testrep
+      - PG_REP_PASSWORD_FILE=/run/secrets/db_replica_password
+      - PG_MASTER_HOST=pg_master # pg_master service name or swarm node private IP where the pg_master service is running
+      - HBA_ADDRESS=10.0.0.0/8
+
+To create a standalone PostgreSQL instance set only the following variables (PG_MASTER or PG_SLAVE vars should not be set):
+
+      - POSTGRES_USER=testuser
+      - PG_PASSWORD_FILE=/run/secrets/db_password
+      - POSTGRES_DB=testdb
+
+See the example in docker-compose-example.yml to create a PostgreSQL HA master/slave setup: 
 
 ```yamlex
 version: "3.3"
@@ -57,7 +86,7 @@ services:
       - POSTGRES_DB=testdb
       - PG_REP_USER=testrep
       - PG_REP_PASSWORD_FILE=/run/secrets/db_replica_password
-      - PG_MASTER_HOST=pg_master  # This needs to be the swarm node private IP instead of the service name (pg_master) which resolves to the service IP
+      - PG_MASTER_HOST=pg_master  # In some cases this needs to be the swarm node private IP instead of the service name (pg_master) which resolves to the service IP
       - HBA_ADDRESS=10.0.0.0/8
     secrets:
       - source: db_replica_password
