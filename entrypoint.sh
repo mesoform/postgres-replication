@@ -67,7 +67,7 @@ if [[ $1 == postgres ]]; then
     echo "Update postgres slave configuration"
     /docker-entrypoint-initdb.d/setup-slave.sh
   else
-    echo "\$PG_MASTER or \$PG_SLAVE need to be true"
+    echo "Setting up standalone PostgreSQL instance"
   fi
   echo "Running main posgres entrypoint"
   bash /usr/local/bin/docker-entrypoint.sh postgres
