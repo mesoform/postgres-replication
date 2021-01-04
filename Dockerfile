@@ -1,6 +1,6 @@
 FROM postgres:13.0-alpine
 
-RUN apk add --update iputils htop lzo pv make libffi-dev openssl-dev gcc
+RUN apk add --update iputils htop lzo pv make libffi-dev openssl-dev gcc musl-dev
 RUN apk add --update --no-cache python3 python3-dev && ln -sf python3 /usr/bin/python
 RUN python3 -m ensurepip
 RUN pip3 install --no-cache --upgrade pip setuptools wheel
