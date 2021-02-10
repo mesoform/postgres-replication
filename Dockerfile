@@ -17,7 +17,7 @@ RUN set -ex  \
 
 FROM postgres:13.0-alpine
 
-RUN apk add --update iputils htop wget
+RUN apk add --update iputils htop
 
 # Copy compiled wal-g binary from builder
 COPY --from=builder /wal-g /usr/local/bin
@@ -30,12 +30,6 @@ RUN chmod +x /docker-entrypoint-initdb.d/*
 # Add custom entrypoint
 COPY scripts/entrypoint.sh /
 RUN chmod +x /entrypoint.sh
-
-# Add wal-g scripts
-COPY scripts/make_basebackup.sh
-COPY scripts/archive_command.sh
-RUN chmod +x /make_basebackup.sh
-RUN chmod +x /archive_command.sh
 
 #Healthcheck to make sure container is ready
 HEALTHCHECK CMD pg_isready -U $POSTGRES_USER -d $POSTGRES_DB || exit 1
