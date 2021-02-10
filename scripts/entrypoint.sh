@@ -8,6 +8,7 @@ export POSTGRES_DB=$POSTGRES_DB
 export PGDATABASE=$POSTGRES_DB
 export PG_REP_USER=$PG_REP_USER
 export WALG_GS_PREFIX=$WALG_GS_BUCKET
+export GOOGLE_APPLICATION_CREDENTIALS=$GCP_CREDENTIALS
 export PG_MASTER=${PG_MASTER:false}
 export PG_SLAVE=${PG_SLAVE:false}
 
@@ -15,12 +16,6 @@ if [[ -n "${PG_PASSWORD_FILE}" ]]; then
   echo "Using password file"
   POSTGRES_PASSWORD=$(cat "${PG_PASSWORD_FILE}")
   export POSTGRES_PASSWORD
-fi
-
-if [[ -n "${GCP_CREDENTIALS}" ]]; then
-  echo "Using GCP credentials file"
-  GOOGLE_APPLICATION_CREDENTIALS=$(cat "${GCP_CREDENTIALS}")
-  export GOOGLE_APPLICATION_CREDENTIALS
 fi
 
 if [[ ${PG_MASTER^^} == TRUE && ${PG_SLAVE^^} == TRUE ]]; then
