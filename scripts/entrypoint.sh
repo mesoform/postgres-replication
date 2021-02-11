@@ -3,12 +3,8 @@
 export PG_REP_PASSWORD_FILE=$PG_REP_PASSWORD_FILE
 export HBA_ADDRESS=$HBA_ADDRESS
 export POSTGRES_USER=$POSTGRES_USER
-export PGUSER=$POSTGRES_USER
 export POSTGRES_DB=$POSTGRES_DB
-export PGDATABASE=$POSTGRES_DB
 export PG_REP_USER=$PG_REP_USER
-export WALG_GS_PREFIX=$WALG_GS_BUCKET
-export GOOGLE_APPLICATION_CREDENTIALS=$GCP_CREDENTIALS
 export PG_MASTER=${PG_MASTER:false}
 export PG_SLAVE=${PG_SLAVE:false}
 
@@ -22,6 +18,16 @@ if [[ ${PG_MASTER^^} == TRUE && ${PG_SLAVE^^} == TRUE ]]; then
   echo "Both \$PG_MASTER and \$PG_SLAVE cannot be true"
   exit 1
 fi
+
+function update_walg_conf() {
+  echo "Initialising wal-g script file"
+  backup_file=/backup_archive.sh
+
+  sed -i "s/GCPCREDENTIALS/$GCP_CREDENTIALS/g" "$backup_file"
+  sed -i "s/WALGGSPREFIX/$WALG_GS_BUCKET/g" "$backup_file"
+  sed -i "s/POSTGRESUSER/$POSTGRES_USER/g" "$backup_file"
+  sed -i "s/POSTGRESDB/$POSTGRES_DB/g" "$backup_file"
+}
 
 function update_master_conf() {
   # PGDATA is defined in upstream postgres dockerfile
@@ -49,7 +55,7 @@ function update_master_conf() {
   docker_setup_env
   docker_temp_server_start
   /docker-entrypoint-initdb.d/setup-master.sh
-  /usr/local/bin/wal-g backup-push $PGDATA
+#  /backup_archive.sh backup-push $PGDATA
   docker_temp_server_stop
 }
 
@@ -67,6 +73,7 @@ fi
 if [[ $1 == postgres ]]; then
   if [[ ${PG_MASTER^^} == TRUE ]]; then
     echo "Update postgres master configuration"
+    update_walg_conf
     update_master_conf
   elif [[ ${PG_SLAVE^^} == TRUE ]]; then
     echo "Update postgres slave configuration"

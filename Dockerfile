@@ -31,6 +31,10 @@ RUN chmod +x /docker-entrypoint-initdb.d/*
 COPY scripts/entrypoint.sh /
 RUN chmod +x /entrypoint.sh
 
+# Add WAL-G backups script
+COPY scripts/backup_archive.sh /
+RUN chmod +x /backup_archive.sh
+
 #Healthcheck to make sure container is ready
 HEALTHCHECK CMD pg_isready -U $POSTGRES_USER -d $POSTGRES_DB || exit 1
 
