@@ -23,10 +23,10 @@ function update_walg_conf() {
   echo "Initialising wal-g script file"
   backup_file=/backup_archive.sh
 
-  sed -i "s/GCPCREDENTIALS/$GCP_CREDENTIALS/g" "$backup_file"
-  sed -i "s/WALGGSPREFIX/$WALG_GS_BUCKET/g" "$backup_file"
-  sed -i "s/POSTGRESUSER/$POSTGRES_USER/g" "$backup_file"
-  sed -i "s/POSTGRESDB/$POSTGRES_DB/g" "$backup_file"
+  sed -i 's@GCPCREDENTIALS@'"$GCP_CREDENTIALS"'@' $backup_file
+  sed -i 's@WALGGSPREFIX@'"$WALG_GS_BUCKET"'@' $backup_file
+  sed -i 's@POSTGRESUSER@'"$POSTGRES_USER"'@' $backup_file
+  sed -i 's@POSTGRESDB@'"$POSTGRES_DB"'@' $backup_file
 }
 
 function update_master_conf() {
