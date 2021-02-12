@@ -21,7 +21,7 @@ fi
 
 function update_walg_conf() {
   echo "Initialising wal-g script file"
-  backup_file=/backup_archive.sh
+  backup_file=/usr/local/scripts/backup_archive.sh
 
   sed -i 's@GCPCREDENTIALS@'"$GCP_CREDENTIALS"'@' $backup_file
   sed -i 's@WALGGSPREFIX@'"$WALG_GS_BUCKET"'@' $backup_file
@@ -55,7 +55,7 @@ function update_master_conf() {
   docker_setup_env
   docker_temp_server_start
   /docker-entrypoint-initdb.d/setup-master.sh
-#  /backup_archive.sh backup-push $PGDATA
+  /usr/local/scripts/backup_archive.sh backup-push $PGDATA
   docker_temp_server_stop
 }
 
