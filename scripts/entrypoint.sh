@@ -55,7 +55,6 @@ function update_master_conf() {
   docker_setup_env
   docker_temp_server_start
   /docker-entrypoint-initdb.d/setup-master.sh
-  /usr/local/scripts/backup_archive.sh backup-push $PGDATA
   docker_temp_server_stop
 }
 
@@ -81,6 +80,6 @@ if [[ $1 == postgres ]]; then
   else
     echo "Setting up standalone PostgreSQL instance"
   fi
-  echo "Running main posgres entrypoint"
+  echo "Running main postgres entrypoint"
   bash /usr/local/bin/docker-entrypoint.sh postgres
 fi

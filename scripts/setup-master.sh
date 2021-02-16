@@ -35,3 +35,6 @@ echo "Adding replication specific configuration"
   echo "hot_standby = on"
   echo "synchronous_standby_names = '*'"
 } >>"$PGDATA"/postgresql.conf
+
+echo "Taking Postgres base backup on $PGDATA"
+/usr/local/scripts/backup_archive.sh backup-push $PGDATA
