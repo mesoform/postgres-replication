@@ -24,7 +24,7 @@ function update_walg_conf() {
   backup_file=/usr/local/scripts/backup_archive.sh
 
   sed -i 's@GCPCREDENTIALS@'"$GCP_CREDENTIALS"'@' $backup_file
-  sed -i 's@WALGGSPREFIX@'"$WALG_GS_BUCKET"'@' $backup_file
+  sed -i 's@STORAGEBUCKET@'"$STORAGE_BUCKET"'@' $backup_file
   sed -i 's@POSTGRESUSER@'"$POSTGRES_USER"'@' $backup_file
   sed -i 's@POSTGRESDB@'"$POSTGRES_DB"'@' $backup_file
 }
@@ -54,7 +54,7 @@ function update_master_conf() {
   source /usr/local/bin/docker-entrypoint.sh
   docker_setup_env
   docker_temp_server_start
-  /docker-entrypoint-initdb.d/setup-master.sh
+  /usr/local/scripts/setup-master.sh
   docker_temp_server_stop
 }
 
@@ -76,7 +76,7 @@ if [[ $1 == postgres ]]; then
     update_master_conf
   elif [[ ${PG_SLAVE^^} == TRUE ]]; then
     echo "Update postgres slave configuration"
-    /docker-entrypoint-initdb.d/setup-slave.sh
+    /usr/local/scripts/setup-slave.sh
   else
     echo "Setting up standalone PostgreSQL instance"
   fi

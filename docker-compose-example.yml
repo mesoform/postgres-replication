@@ -20,7 +20,7 @@ services:
       - PG_REP_USER=testrep
       - PG_REP_PASSWORD_FILE=/run/secrets/db_replica_password
       - HBA_ADDRESS=10.0.0.0/8
-      - WALG_GS_BUCKET=gs://postgres13/wal-g
+      - STORAGE_BUCKET=gs://postgres13/wal-g
       - GCP_CREDENTIALS=/run/secrets/gcp_credentials
     ports:
       - "5432:5432"
