@@ -19,6 +19,14 @@ if [[ ${PG_MASTER^^} == TRUE && ${PG_SLAVE^^} == TRUE ]]; then
   exit 1
 fi
 
+function create_base_backup() {
+  echo "Adding Postgres base_backup initialisation script"
+  {
+    echo '#!/bin/bash'
+    echo "/usr/local/scripts/backup_archive.sh backup-push $PGDATA"
+  } >>/docker-entrypoint-initdb.d/base_backup.sh
+}
+
 function update_walg_conf() {
   echo "Initialising wal-g script file"
   backup_file=/usr/local/scripts/backup_archive.sh
@@ -56,14 +64,6 @@ function update_master_conf() {
   docker_temp_server_start
   /usr/local/scripts/setup-master.sh
   docker_temp_server_stop
-
-  echo "Adding Postgres base_backup initialisation script"
-  {
-    echo "#!/bin/bash"
-    echo "/usr/local/scripts/backup_archive.sh backup-push $PGDATA"
-  } >>/docker-entrypoint-initdb.d/base_backup.sh
-  chown -R root:postgres /docker-entrypoint-initdb.d/
-  chmod -R 775 /docker-entrypoint-initdb.d/*
 }
 
 if [[ $(id -u) == 0 ]]; then
@@ -82,6 +82,7 @@ if [[ $1 == postgres ]]; then
     echo "Update postgres master configuration"
     update_walg_conf
     update_master_conf
+    create_base_backup
   elif [[ ${PG_SLAVE^^} == TRUE ]]; then
     echo "Update postgres slave configuration"
     /usr/local/scripts/setup-slave.sh

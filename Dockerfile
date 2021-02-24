@@ -29,6 +29,9 @@ COPY scripts/setup-slave.sh /usr/local/scripts/
 COPY scripts/backup_archive.sh /usr/local/scripts/
 RUN chown -R root:postgres /usr/local/scripts
 RUN chmod -R 775 /usr/local/scripts/*
+RUN touch /docker-entrypoint-initdb.d/base_backup.sh
+RUN chown -R root:postgres /docker-entrypoint-initdb.d/
+RUN chmod -R 775 /docker-entrypoint-initdb.d/base_backup.sh
 
 # Add custom entrypoint
 COPY scripts/entrypoint.sh /
