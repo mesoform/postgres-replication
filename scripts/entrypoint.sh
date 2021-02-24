@@ -56,6 +56,14 @@ function update_master_conf() {
   docker_temp_server_start
   /usr/local/scripts/setup-master.sh
   docker_temp_server_stop
+
+  echo "Adding Postgres base_backup initialisation script"
+  {
+    echo "#!/bin/bash"
+    echo "/usr/local/scripts/backup_archive.sh backup-push $PGDATA"
+  } >>/docker-entrypoint-initdb.d/base_backup.sh
+  chown -R root:postgres /docker-entrypoint-initdb.d/
+  chmod -R 775 /docker-entrypoint-initdb.d/*
 }
 
 if [[ $(id -u) == 0 ]]; then

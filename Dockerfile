@@ -22,22 +22,17 @@ RUN apk add --update iputils htop
 # Copy compiled wal-g binary from builder
 COPY --from=builder /wal-g /usr/local/bin
 
-# Add replication scripts
+# Add replication and WAL-G backup scripts
 RUN mkdir -p /usr/local/scripts
-COPY scripts/setup-master.sh /usr/local/scripts
-COPY scripts/setup-slave.sh /usr/local/scripts
-COPY scripts/backup_archive.sh /usr/local/scripts
+COPY scripts/setup-master.sh /usr/local/scripts/
+COPY scripts/setup-slave.sh /usr/local/scripts/
+COPY scripts/backup_archive.sh /usr/local/scripts/
 RUN chown -R root:postgres /usr/local/scripts
-RUN chmod -R 775 /usr/local/scripts
+RUN chmod -R 775 /usr/local/scripts/*
 
 # Add custom entrypoint
 COPY scripts/entrypoint.sh /
 RUN chmod +x /entrypoint.sh
-
-# Add WAL-G backup script
-COPY scripts/base_backup.sh /docker-entrypoint-initdb.d/
-RUN chown -R root:postgres /docker-entrypoint-initdb.d/
-RUN chmod -R 775 /docker-entrypoint-initdb.d/
 
 #Healthcheck to make sure container is ready
 HEALTHCHECK CMD pg_isready -U $POSTGRES_USER -d $POSTGRES_DB || exit 1
