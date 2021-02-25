@@ -24,7 +24,7 @@ function create_base_backup() {
   {
     echo '#!/bin/bash'
     echo "/usr/local/scripts/backup_archive.sh backup-push $PGDATA"
-  } >>/docker-entrypoint-initdb.d/base_backup.sh
+  } >>/usr/local/script/base_backup.sh
 }
 
 function update_walg_conf() {
@@ -62,7 +62,7 @@ function update_master_conf() {
   source /usr/local/bin/docker-entrypoint.sh
   docker_setup_env
   docker_temp_server_start
-  /usr/local/scripts/setup-master.sh
+  /docker-entrypoint-initdb.d/setup-master.sh
   docker_temp_server_stop
 }
 
@@ -85,7 +85,7 @@ if [[ $1 == postgres ]]; then
     create_base_backup
   elif [[ ${PG_SLAVE^^} == TRUE ]]; then
     echo "Update postgres slave configuration"
-    /usr/local/scripts/setup-slave.sh
+    /docker-entrypoint-initdb.d/setup-slave.sh
   else
     echo "Setting up standalone PostgreSQL instance"
   fi

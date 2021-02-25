@@ -24,14 +24,16 @@ COPY --from=builder /wal-g /usr/local/bin
 
 # Add replication and WAL-G backup scripts
 RUN mkdir -p /usr/local/scripts
-COPY scripts/setup-master.sh /usr/local/scripts/
-COPY scripts/setup-slave.sh /usr/local/scripts/
-COPY scripts/backup_archive.sh /usr/local/scripts/
-RUN chown -R root:postgres /usr/local/scripts
-RUN chmod -R 775 /usr/local/scripts/*
-RUN touch /docker-entrypoint-initdb.d/base_backup.sh
+COPY scripts/setup-master.sh /docker-entrypoint-initdb.d/
+COPY scripts/setup-slave.sh /docker-entrypoint-initdb.d/
 RUN chown -R root:postgres /docker-entrypoint-initdb.d/
-RUN chmod -R 775 /docker-entrypoint-initdb.d/base_backup.sh
+RUN chmod -R 775 /docker-entrypoint-initdb.d
+
+# Add WAL-G backup script
+COPY scripts/backup_archive.sh /usr/local/scripts/
+RUN touch /usr/local/scripts/base_backup.sh
+RUN chown -R root:postgres /usr/local/scripts
+RUN chmod -R 775 /usr/local/scripts
 
 # Add custom entrypoint
 COPY scripts/entrypoint.sh /
