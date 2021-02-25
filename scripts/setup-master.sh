@@ -29,13 +29,11 @@ echo "Adding replication specific configuration"
 {
   echo "wal_level = hot_standby"
   echo "archive_mode = on"
-  echo "archive_command = '/usr/local/scripts/backup_archive.sh wal-push %p'"
+  echo "archive_command = '/usr/local/scripts/backup_archive.sh'"
   echo "max_wal_senders = 5"
   echo "wal_keep_size = 512"
   echo "hot_standby = on"
   echo "synchronous_standby_names = '*'"
 } >>"$PGDATA"/postgresql.conf
-
-[[ -f /usr/local/scripts/initbackup ]] && /usr/local/scripts/backup_archive.sh backup-push $PGDATA
 
 touch /usr/local/scripts/initbackup

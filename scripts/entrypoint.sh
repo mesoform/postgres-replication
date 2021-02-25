@@ -19,17 +19,9 @@ if [[ ${PG_MASTER^^} == TRUE && ${PG_SLAVE^^} == TRUE ]]; then
   exit 1
 fi
 
-function create_base_backup() {
-  echo "Adding Postgres base_backup initialisation script"
-  {
-    echo '#!/bin/bash'
-    echo "/usr/local/scripts/backup_archive.sh backup-push $PGDATA"
-  } >>/usr/local/scripts/base_backup.sh
-}
-
 function update_walg_conf() {
   echo "Initialising wal-g script file"
-  backup_file=/usr/local/scripts/backup_archive.sh
+  backup_file=/usr/local/scripts/walg_caller.sh
 
   sed -i 's@GCPCREDENTIALS@'"$GCP_CREDENTIALS"'@' $backup_file
   sed -i 's@STORAGEBUCKET@'"$STORAGE_BUCKET"'@' $backup_file
@@ -82,7 +74,6 @@ if [[ $1 == postgres ]]; then
     echo "Update postgres master configuration"
     update_walg_conf
     update_master_conf
-    create_base_backup
   elif [[ ${PG_SLAVE^^} == TRUE ]]; then
     echo "Update postgres slave configuration"
     /docker-entrypoint-initdb.d/setup-slave.sh

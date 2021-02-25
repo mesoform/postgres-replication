@@ -30,8 +30,8 @@ RUN chown -R root:postgres /docker-entrypoint-initdb.d/
 RUN chmod -R 775 /docker-entrypoint-initdb.d
 
 # Add WAL-G backup script
+COPY scripts/walg_caller.sh /usr/local/scripts/
 COPY scripts/backup_archive.sh /usr/local/scripts/
-RUN touch /usr/local/scripts/base_backup.sh
 RUN chown -R root:postgres /usr/local/scripts
 RUN chmod -R 775 /usr/local/scripts
 
