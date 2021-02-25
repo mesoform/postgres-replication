@@ -11,4 +11,5 @@ echo "WALG_GS_PREFIX: $WALG_GS_PREFIX"
 echo "PGUSER: $PGUSER"
 echo "PGDATABASE: $PGDATABASE"
 
+echo "Running command /usr/local/bin/wal-g $1 $2 $3"
 /usr/local/bin/wal-g $1 $2 $3

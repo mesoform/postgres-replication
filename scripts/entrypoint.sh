@@ -24,7 +24,7 @@ function create_base_backup() {
   {
     echo '#!/bin/bash'
     echo "/usr/local/scripts/backup_archive.sh backup-push $PGDATA"
-  } >>/usr/local/script/base_backup.sh
+  } >>/usr/local/scripts/base_backup.sh
 }
 
 function update_walg_conf() {
