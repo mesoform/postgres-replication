@@ -35,5 +35,3 @@ echo "Adding replication specific configuration"
   echo "hot_standby = on"
   echo "synchronous_standby_names = '*'"
 } >>"$PGDATA"/postgresql.conf
-
-touch /usr/local/scripts/initbackup

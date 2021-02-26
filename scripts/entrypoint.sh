@@ -19,14 +19,13 @@ if [[ ${PG_MASTER^^} == TRUE && ${PG_SLAVE^^} == TRUE ]]; then
   exit 1
 fi
 
-function update_walg_conf() {
-  echo "Initialising wal-g script file"
-  backup_file=/usr/local/scripts/walg_caller.sh
-
-  sed -i 's@GCPCREDENTIALS@'"$GCP_CREDENTIALS"'@' $backup_file
-  sed -i 's@STORAGEBUCKET@'"$STORAGE_BUCKET"'@' $backup_file
-  sed -i 's@POSTGRESUSER@'"$POSTGRES_USER"'@' $backup_file
-  sed -i 's@POSTGRESDB@'"$POSTGRES_DB"'@' $backup_file
+function initial_base_backup() {
+    docker_setup_env
+    docker_temp_server_start
+    echo "Running initial database base backup"
+    /usr/local/scripts/walg_caller.sh backup-push "$PGDATA"
+    docker_temp_server_stop
+    unset PGPASSWORD
 }
 
 function update_master_conf() {
@@ -63,13 +62,17 @@ function update_master_conf() {
     echo
 		echo 'PostgreSQL init process complete; ready for start up.'
 		echo
-    echo "Running initial base backup"
-    docker_setup_env
-    docker_temp_server_start
-    /usr/local/scripts/walg_caller.sh backup-push "$PGDATA"
-    docker_temp_server_stop
-    unset PGPASSWORD
   fi
+}
+
+function update_walg_conf() {
+  echo "Initialising wal-g script file"
+  backup_file=/usr/local/scripts/walg_caller.sh
+
+  sed -i 's@GCPCREDENTIALS@'"$GCP_CREDENTIALS"'@' $backup_file
+  sed -i 's@STORAGEBUCKET@'"$STORAGE_BUCKET"'@' $backup_file
+  sed -i 's@POSTGRESUSER@'"$POSTGRES_USER"'@' $backup_file
+  sed -i 's@POSTGRESDB@'"$POSTGRES_DB"'@' $backup_file
 }
 
 if [[ $(id -u) == 0 ]]; then
@@ -88,6 +91,7 @@ if [[ $1 == postgres ]]; then
     echo "Update postgres master configuration"
     update_walg_conf
     update_master_conf
+    initial_base_backup
   elif [[ ${PG_SLAVE^^} == TRUE ]]; then
     echo "Update postgres slave configuration"
     /docker-entrypoint-initdb.d/setup-slave.sh
