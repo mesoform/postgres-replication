@@ -9,7 +9,7 @@ export PG_MASTER=${PG_MASTER:false}
 export PG_SLAVE=${PG_SLAVE:false}
 
 if [[ -n "${PG_PASSWORD_FILE}" ]]; then
-  echo "Using password file"
+  echo "Using password file\n"
   POSTGRES_PASSWORD=$(cat "${PG_PASSWORD_FILE}")
   export POSTGRES_PASSWORD
 fi
@@ -19,24 +19,31 @@ if [[ ${PG_MASTER^^} == TRUE && ${PG_SLAVE^^} == TRUE ]]; then
   exit 1
 fi
 
-function initial_base_backup() {
+function take_base_backup() {
     docker_setup_env
     docker_temp_server_start
-    echo "Running initial database base backup"
+    echo "Running initial database base backup\n"
     /usr/local/scripts/walg_caller.sh backup-push "$PGDATA"
     docker_temp_server_stop
     unset PGPASSWORD
 }
 
 function update_master_conf() {
-  # PGDATA is defined in upstream postgres dockerfile
-  config_file=$PGDATA/postgresql.conf
+    echo "Reinitialising config file\n"
+    sed -i "s/wal_level =.*$//g" "$config_file"
+    sed -i "s/archive_mode =.*$//g" "$config_file"
+    sed -i "s/archive_command =.*$//g" "$config_file"
+    sed -i "s/max_wal_senders =.*$//g" "$config_file"
+    sed -i "s/wal_keep_size =.*$//g" "$config_file"
+    sed -i "s/hot_standby =.*$//g" "$config_file"
+    sed -i "s/synchronous_standby_names =.*$//g" "$config_file"
+    echo
+    echo "Setting up replication on master\n"
+    docker_process_init_files /docker-entrypoint-initdb.d/*
+}
 
-  # Check if configuration file exists.
-  # If not, it probably means that database is not initialized yet
-  if [[ ! -f $config_file ]]; then
-    echo "No existing database detected, proceed to initialisation"
-
+function create_master_db() {
+    echo "No existing database detected, proceed to initialisation\n"
     source /usr/local/bin/docker-entrypoint.sh
     docker_setup_env
     docker_create_db_directories
@@ -47,26 +54,14 @@ function update_master_conf() {
     export PGPASSWORD="${PGPASSWORD:-$POSTGRES_PASSWORD}"
     docker_temp_server_start
     docker_setup_db
-    echo "Update postgres master configuration"
-    echo
-    echo "Reinitialising config file"
-    sed -i "s/wal_level =.*$//g" "$config_file"
-    sed -i "s/archive_mode =.*$//g" "$config_file"
-    sed -i "s/archive_command =.*$//g" "$config_file"
-    sed -i "s/max_wal_senders =.*$//g" "$config_file"
-    sed -i "s/wal_keep_size =.*$//g" "$config_file"
-    sed -i "s/hot_standby =.*$//g" "$config_file"
-    sed -i "s/synchronous_standby_names =.*$//g" "$config_file"
-    docker_process_init_files /docker-entrypoint-initdb.d/*
+    echo "Update postgres master configuration\n"
+    update_master_conf
     docker_temp_server_stop
-    echo
-		echo 'PostgreSQL init process complete; ready for start up.'
-		echo
-  fi
+    echo 'PostgreSQL init process complete; ready for start up\n'
 }
 
-function update_walg_conf() {
-  echo "Initialising wal-g script file"
+function init_walg_conf() {
+  echo "Initialising wal-g script variables\n"
   backup_file=/usr/local/scripts/walg_caller.sh
 
   sed -i 's@GCPCREDENTIALS@'"$GCP_CREDENTIALS"'@' $backup_file
@@ -78,7 +73,7 @@ function update_walg_conf() {
 if [[ $(id -u) == 0 ]]; then
   # then restart script as postgres user
   # shellcheck disable=SC2128
-  echo "detected running as root user, changing to postgres"
+  echo "Detected running as root user, changing to postgres\n"
   exec su-exec postgres "$BASH_SOURCE" "$@"
 fi
 
@@ -88,16 +83,19 @@ fi
 
 if [[ $1 == postgres ]]; then
   if [[ ${PG_MASTER^^} == TRUE ]]; then
-    echo "Update postgres master configuration"
-    update_walg_conf
-    update_master_conf
-    initial_base_backup
+    init_walg_conf
+    config_file=$PGDATA/postgresql.conf
+    #If config file does not exist then create and initialise database and replication
+    if [[ ! -f $config_file ]]; then
+      create_master_db
+    fi
+    take_base_backup
   elif [[ ${PG_SLAVE^^} == TRUE ]]; then
-    echo "Update postgres slave configuration"
+    echo "Update postgres slave configuration\n"
     /docker-entrypoint-initdb.d/setup-slave.sh
   else
-    echo "Setting up standalone PostgreSQL instance"
+    echo "Setting up standalone PostgreSQL instance\n"
   fi
-  echo "Running main postgres entrypoint"
+  echo "Running main postgres entrypoint\n"
   bash /usr/local/bin/docker-entrypoint.sh postgres
 fi
