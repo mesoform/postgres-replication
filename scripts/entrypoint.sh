@@ -37,25 +37,39 @@ function update_master_conf() {
   # If not, it probably means that database is not initialized yet
   if [[ ! -f $config_file ]]; then
     echo "No existing database detected, proceed to initialisation"
-    return
+
+    source /usr/local/bin/docker-entrypoint.sh
+    docker_setup_env
+    docker_create_db_directories
+    docker_verify_minimum_env
+    ls /docker-entrypoint-initdb.d/ > /dev/null
+    docker_init_database_dir
+    pg_setup_hba_conf
+    export PGPASSWORD="${PGPASSWORD:-$POSTGRES_PASSWORD}"
+    docker_temp_server_start
+    docker_setup_db
+    echo "Update postgres master configuration"
+    echo
+    echo "Reinitialising config file"
+    sed -i "s/wal_level =.*$//g" "$config_file"
+    sed -i "s/archive_mode =.*$//g" "$config_file"
+    sed -i "s/archive_command =.*$//g" "$config_file"
+    sed -i "s/max_wal_senders =.*$//g" "$config_file"
+    sed -i "s/wal_keep_size =.*$//g" "$config_file"
+    sed -i "s/hot_standby =.*$//g" "$config_file"
+    sed -i "s/synchronous_standby_names =.*$//g" "$config_file"
+    docker_process_init_files /docker-entrypoint-initdb.d/*
+    docker_temp_server_stop
+    echo
+		echo 'PostgreSQL init process complete; ready for start up.'
+		echo
+    echo "Running initial base backup"
+    docker_setup_env
+    docker_temp_server_start
+    /usr/local/scripts/walg_caller.sh backup-push "$PGDATA"
+    docker_temp_server_stop
+    unset PGPASSWORD
   fi
-
-  echo "Update postgres master configuration"
-
-  echo "Reinitialising config file"
-  sed -i "s/wal_level =.*$//g" "$config_file"
-  sed -i "s/archive_mode =.*$//g" "$config_file"
-  sed -i "s/archive_command =.*$//g" "$config_file"
-  sed -i "s/max_wal_senders =.*$//g" "$config_file"
-  sed -i "s/wal_keep_size =.*$//g" "$config_file"
-  sed -i "s/hot_standby =.*$//g" "$config_file"
-  sed -i "s/synchronous_standby_names =.*$//g" "$config_file"
-
-  source /usr/local/bin/docker-entrypoint.sh
-  docker_setup_env
-  docker_temp_server_start
-  /docker-entrypoint-initdb.d/setup-master.sh
-  docker_temp_server_stop
 }
 
 if [[ $(id -u) == 0 ]]; then
