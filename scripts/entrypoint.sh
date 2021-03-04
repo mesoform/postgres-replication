@@ -23,6 +23,7 @@ fi
 
 function take_base_backup() {
     docker_setup_env
+    echo "sleep 30" && sleep 30
     docker_temp_server_start
     echo "Running initial database base backup"
     /usr/local/scripts/walg_caller.sh backup-push "$PGDATA"
@@ -40,9 +41,6 @@ function update_master_conf() {
     sed -i "s/synchronous_standby_names =.*$//g" "$config_file"
     sed -i "s/restore_command =.*$//g" "$config_file"
     sed -i "s/recovery_target_time =.*$//g" "$config_file"
-    echo
-    echo "Setting up replication on master"
-    docker_process_init_files /docker-entrypoint-initdb.d/*
 }
 
 function create_master_db() {
@@ -59,7 +57,6 @@ function create_master_db() {
 
 function setup_master_db() {
     config_file=$PGDATA/postgresql.conf
-    source /usr/local/bin/docker-entrypoint.sh
     docker_setup_env
     #If config file does not exist then create and initialise database and replication
     if [[ ! -f $config_file ]]; then
@@ -69,6 +66,8 @@ function setup_master_db() {
     fi
     echo "Update postgres master configuration"
     update_master_conf
+    echo "Setting up replication on master"
+    docker_process_init_files /docker-entrypoint-initdb.d/*
     docker_temp_server_stop
     echo 'PostgreSQL init process complete; ready for start up'
 }
@@ -83,7 +82,6 @@ function init_walg_conf() {
   sed -i 's@POSTGRESDB@'"$POSTGRES_DB"'@' $backup_file
   HOSTNAMEDATE="$(hostname)-$(date +"%d%m%Y")"
   sed -i 's@CONTAINERDATE@'"$HOSTNAMEDATE"'@' $backup_file
-  fi
 }
 
 function restore_walg_conf() {
@@ -101,17 +99,18 @@ function restore_walg_conf() {
 function restore_backup() {
     docker_setup_env
     restore_walg_conf
+    update_master_conf
     echo "Restoring backup $BACKUP_NAME"
     /usr/local/scripts/walg_restore.sh backup-fetch "$PGDATA" LATEST
 
     echo "Adding recovery config file"
     {
       echo "restore_command = '/usr/local/scripts/walg_restore.sh wal-fetch %f %p'"
-      echo "recovery_target_time = '2222-11-11 00:00:00'"
     } >>"$PGDATA"/postgresql.conf
 
     touch "${PGDATA}"/recovery.signal
     docker_temp_server_start
+    while [ -f "${PGDATA}"/recovery.signal ]; do sleep 2 && echo "."; done
     docker_temp_server_stop
 }
 
@@ -125,6 +124,8 @@ fi
 if [[ ${1:0:1} == - ]]; then
   set -- postgres "$@"
 fi
+
+source /usr/local/bin/docker-entrypoint.sh
 
 if [[ $1 == postgres ]]; then
   if [[ ${PG_MASTER^^} == TRUE ]]; then
