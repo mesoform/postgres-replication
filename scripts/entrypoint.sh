@@ -31,16 +31,18 @@ function take_base_backup() {
 }
 
 function update_master_conf() {
-    echo "Reinitialising config file"
-    sed -i "s/wal_level =.*$//g" "$config_file"
-    sed -i "s/archive_mode =.*$//g" "$config_file"
-    sed -i "s/archive_command =.*$//g" "$config_file"
-    sed -i "s/max_wal_senders =.*$//g" "$config_file"
-    sed -i "s/wal_keep_size =.*$//g" "$config_file"
-    sed -i "s/hot_standby =.*$//g" "$config_file"
-    sed -i "s/synchronous_standby_names =.*$//g" "$config_file"
-    sed -i "s/restore_command =.*$//g" "$config_file"
-    sed -i "s/recovery_target_time =.*$//g" "$config_file"
+    if [[ -f $config_file ]]; then
+      echo "Reinitialising config file"
+      sed -i "s/wal_level =.*$//g" "$config_file"
+      sed -i "s/archive_mode =.*$//g" "$config_file"
+      sed -i "s/archive_command =.*$//g" "$config_file"
+      sed -i "s/max_wal_senders =.*$//g" "$config_file"
+      sed -i "s/wal_keep_size =.*$//g" "$config_file"
+      sed -i "s/hot_standby =.*$//g" "$config_file"
+      sed -i "s/synchronous_standby_names =.*$//g" "$config_file"
+      sed -i "s/restore_command =.*$//g" "$config_file"
+      sed -i "s/recovery_target_time =.*$//g" "$config_file"
+    fi
 }
 
 function create_master_db() {
@@ -56,7 +58,6 @@ function create_master_db() {
 }
 
 function setup_master_db() {
-    config_file=$PGDATA/postgresql.conf
     docker_setup_env
     #If config file does not exist then create and initialise database and replication
     if [[ ! -f $config_file ]]; then
@@ -73,27 +74,27 @@ function setup_master_db() {
 }
 
 function init_walg_conf() {
-  echo "Initialising wal-g script variables"
-  backup_file=/usr/local/scripts/walg_caller.sh
+    echo "Initialising wal-g script variables"
+    backup_file=/usr/local/scripts/walg_caller.sh
 
-  sed -i 's@GCPCREDENTIALS@'"$GCP_CREDENTIALS"'@' $backup_file
-  sed -i 's@STORAGEBUCKET@'"$STORAGE_BUCKET"'@' $backup_file
-  sed -i 's@POSTGRESUSER@'"$POSTGRES_USER"'@' $backup_file
-  sed -i 's@POSTGRESDB@'"$POSTGRES_DB"'@' $backup_file
-  HOSTNAMEDATE="$(hostname)-$(date +"%d%m%Y")"
-  sed -i 's@CONTAINERDATE@'"$HOSTNAMEDATE"'@' $backup_file
+    sed -i 's@GCPCREDENTIALS@'"$GCP_CREDENTIALS"'@' $backup_file
+    sed -i 's@STORAGEBUCKET@'"$STORAGE_BUCKET"'@' $backup_file
+    sed -i 's@POSTGRESUSER@'"$POSTGRES_USER"'@' $backup_file
+    sed -i 's@POSTGRESDB@'"$POSTGRES_DB"'@' $backup_file
+    HOSTNAMEDATE="$(hostname)-$(date +"%d%m%Y")"
+    sed -i 's@CONTAINERDATE@'"$HOSTNAMEDATE"'@' $backup_file
 }
 
 function restore_walg_conf() {
-  echo "Initialising wal-g restore script variables"
-  cp /usr/local/scripts/walg_caller.sh /usr/local/scripts/walg_restore.sh
-  restore_file=/usr/local/scripts/walg_restore.sh
+    echo "Initialising wal-g restore script variables"
+    cp /usr/local/scripts/walg_caller.sh /usr/local/scripts/walg_restore.sh
+    restore_file=/usr/local/scripts/walg_restore.sh
 
-  sed -i 's@GCPCREDENTIALS@'"$GCP_CREDENTIALS"'@' $restore_file
-  sed -i 's@STORAGEBUCKET@'"$STORAGE_BUCKET"'@' $restore_file
-  sed -i 's@CONTAINERDATE@'"$BACKUP_NAME"'@' $restore_file
-  sed -i 's@POSTGRESUSER@'"$POSTGRES_USER"'@' $restore_file
-  sed -i 's@POSTGRESDB@'"$POSTGRES_DB"'@' $restore_file
+    sed -i 's@GCPCREDENTIALS@'"$GCP_CREDENTIALS"'@' $restore_file
+    sed -i 's@STORAGEBUCKET@'"$STORAGE_BUCKET"'@' $restore_file
+    sed -i 's@CONTAINERDATE@'"$BACKUP_NAME"'@' $restore_file
+    sed -i 's@POSTGRESUSER@'"$POSTGRES_USER"'@' $restore_file
+    sed -i 's@POSTGRESDB@'"$POSTGRES_DB"'@' $restore_file
 }
 
 function restore_backup() {
@@ -110,7 +111,7 @@ function restore_backup() {
 
     touch "${PGDATA}"/recovery.signal
     docker_temp_server_start
-    while [ -f "${PGDATA}"/recovery.signal ]; do sleep 2 && echo "."; done
+    while [[ -f "${PGDATA}"/recovery.signal ]]; do sleep 2 && echo "."; done
     docker_temp_server_stop
 }
 
@@ -126,6 +127,7 @@ if [[ ${1:0:1} == - ]]; then
 fi
 
 source /usr/local/bin/docker-entrypoint.sh
+config_file=$PGDATA/postgresql.conf
 
 if [[ $1 == postgres ]]; then
   if [[ ${PG_MASTER^^} == TRUE ]]; then
