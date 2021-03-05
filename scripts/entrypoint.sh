@@ -100,16 +100,16 @@ function restore_walg_conf() {
 function restore_backup() {
     docker_setup_env
     restore_walg_conf
-    update_master_conf
     echo "Restoring backup $BACKUP_NAME"
     /usr/local/scripts/walg_restore.sh backup-fetch "$PGDATA" LATEST
-
+    update_master_conf
     echo "Adding recovery config file"
     {
       echo "restore_command = '/usr/local/scripts/walg_restore.sh wal-fetch %f %p'"
     } >>"$PGDATA"/postgresql.conf
 
     touch "${PGDATA}"/recovery.signal
+
     docker_temp_server_start
     while [[ -f "${PGDATA}"/recovery.signal ]]; do sleep 2 && echo "."; done
     docker_temp_server_stop
