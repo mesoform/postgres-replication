@@ -29,7 +29,7 @@ echo "Adding replication specific configuration"
 {
   echo "wal_level = hot_standby"
   echo "archive_mode = on"
-  echo "archive_command = 'cd .'"
+  echo "archive_command = '/usr/local/scripts/walg_caller.sh wal-push %p'"
   echo "max_wal_senders = 5"
   echo "wal_keep_size = 512"
   echo "hot_standby = on"
