@@ -30,7 +30,7 @@ function take_base_backup() {
     docker_temp_server_stop
 }
 
-function update_master_conf() {
+function init_postgres_conf() {
     if [[ -f $config_file ]]; then
       echo "Reinitialising config file"
       sed -i "s/wal_level =.*$//g" "$config_file"
@@ -65,10 +65,18 @@ function setup_master_db() {
     else
       docker_temp_server_start
     fi
-    echo "Update postgres master configuration"
-    update_master_conf
-    echo "Setting up replication on master"
-    docker_process_init_files /docker-entrypoint-initdb.d/*
+    init_postgres_conf
+    if [[ ${PG_MASTER^^} == TRUE ]]; then
+      echo "Setting up replication on master instance"
+      docker_process_init_files /docker-entrypoint-initdb.d/*
+    else
+      echo "Setting up standalone PostgreSQL instance with WAL archiving"
+      {
+        echo "wal_level = replica"
+        echo "archive_mode = on"
+        echo "archive_command = '/usr/local/scripts/walg_caller.sh wal-push %p'"
+      } >>"$PGDATA"/postgresql.conf
+    fi
     docker_temp_server_stop
     echo 'PostgreSQL init process complete; ready for start up'
 }
@@ -102,7 +110,7 @@ function restore_backup() {
     restore_walg_conf
     echo "Restoring backup $BACKUP_NAME"
     /usr/local/scripts/walg_restore.sh backup-fetch "$PGDATA" LATEST
-    update_master_conf
+    init_postgres_conf
     echo "Adding recovery config file"
     {
       echo "restore_command = '/usr/local/scripts/walg_restore.sh wal-fetch %f %p'"
@@ -130,7 +138,10 @@ source /usr/local/bin/docker-entrypoint.sh
 config_file=$PGDATA/postgresql.conf
 
 if [[ $1 == postgres ]]; then
-  if [[ ${PG_MASTER^^} == TRUE ]]; then
+  if [[ ${PG_SLAVE^^} == TRUE ]]; then
+    echo "Update postgres slave configuration"
+    /docker-entrypoint-initdb.d/setup-slave.sh
+  else
     if [[ ${RESTORE_BACKUP^^} == TRUE ]]; then
       restore_backup
     fi
@@ -138,11 +149,6 @@ if [[ $1 == postgres ]]; then
     setup_master_db
     take_base_backup
     unset PGPASSWORD
-  elif [[ ${PG_SLAVE^^} == TRUE ]]; then
-    echo "Update postgres slave configuration"
-    /docker-entrypoint-initdb.d/setup-slave.sh
-  else
-    echo "Setting up standalone PostgreSQL instance"
   fi
   echo "Running main postgres entrypoint"
   bash /usr/local/bin/docker-entrypoint.sh postgres
