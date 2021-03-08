@@ -142,7 +142,7 @@ if [[ $1 == postgres ]]; then
     echo "Update postgres slave configuration"
     /docker-entrypoint-initdb.d/setup-slave.sh
   else
-    if [[ ${RESTORE_BACKUP^^} == TRUE ]]; then
+    if [[ ${RESTORE_BACKUP^^} == TRUE && -n ${BACKUP_NAME} ]]; then
       restore_backup
     fi
     init_walg_conf
