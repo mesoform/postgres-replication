@@ -31,7 +31,7 @@ echo "Adding replication specific configuration"
   echo "archive_mode = on"
   echo "archive_command = '/usr/local/scripts/walg_caller.sh wal-push %p'"
   echo "max_wal_senders = 5"
-  echo "wal_keep_size = 512"
+  echo "wal_keep_segments = 32"
   echo "hot_standby = on"
   echo "synchronous_standby_names = '*'"
 } >>"$PGDATA"/postgresql.conf
