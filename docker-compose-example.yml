@@ -20,7 +20,7 @@ services:
       - PG_REP_USER=testrep
       - PG_REP_PASSWORD_FILE=/run/secrets/db_replica_password
       - HBA_ADDRESS=10.0.0.0/8
-      - STORAGE_BUCKET=gs://postgres12/wal-g
+      - STORAGE_BUCKET=gs://postgresql12/wal-g
       - GCP_CREDENTIALS=/run/secrets/gcp_credentials
       - RESTORE_BACKUP=true
       - BACKUP_NAME=ab123c4d56e7-28012021
