@@ -1,7 +1,7 @@
 # Postgres HA
 
 ## Summary
-Postgres database image setup for HA replication with base backups and WAL archiving to GCS and Recovery
+Postgres database image setup for HA replication with control over backups and WAL archiving to GCS and backup restoration functionality.
 
 ## How to use
 Variables usage:
@@ -38,7 +38,7 @@ To run backups and WAL archiving to GCS (Google Cloud Storage) set the following
       - STORAGE_BUCKET=gs://postgresql13/wal-g         # To specify the GCS bucket
       - GCP_CREDENTIALS=/run/secrets/gcp_credentials   # To specify the docker secret with the service account key that has access to the GCS bucket
       
-To restore a backup from GCS (Google Cloud Storage) set the following variables (backups will be restored on a MASTER or standalone instance):
+To restore a backup from GCS (Google Cloud Storage) set the following variables (backups can be restored on a MASTER or STANDALONE instance):
 
       - RESTORE_BACKUP=true                 # Set to true
       - BACKUP_NAME=ab123c4d56e7-28012021   # To specify the name of the GCS backup to be restored (the name corresponds to the container-date when the backup was taken)
@@ -124,7 +124,7 @@ services:
     deploy:
       placement:
         constraints:
-        - node.labels.type != primary
+        - node.labels.type == secondary
 
 networks:
   database: {}
@@ -138,7 +138,7 @@ volumes:
 Run with:
 
 ```shell script
-docker stack deploy -c docker-compose-example.yml test
+docker stack deploy -c docker-compose-example.yml test_pg13ha
 ```
 
 ## How to upgrade to latest PostgreSQL version
@@ -293,7 +293,7 @@ services:
       - POSTGRES_DB=testdb
       - POSTGRES_USER=testuser
       - PG_PASSWORD_FILE=/run/secrets/testapp_db_password
-      - PG_REP_USER=repuser
+      - PG_REP_USER=testrep
       - PG_REP_PASSWORD_FILE=/run/secrets/testapp_db_replica_password
       - HBA_ADDRESS=10.0.0.0/8
       - STORAGE_BUCKET=gs://backups/postgres/testapp
@@ -315,7 +315,7 @@ services:
       - POSTGRES_DB=testdb
       - POSTGRES_USER=testuser
       - PG_PASSWORD_FILE=/run/secrets/testapp_db_password
-      - PG_REP_USER=repuser
+      - PG_REP_USER=testrep
       - PG_REP_PASSWORD_FILE=/run/secrets/testapp_db_replica_password
       - HBA_ADDRESS=10.0.0.0/8
       - PG_MASTER_HOST=db
