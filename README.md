@@ -141,6 +141,207 @@ Run with:
 docker stack deploy -c docker-compose-example.yml test
 ```
 
+## How to upgrade to latest PostgreSQL version
+
+The process consists of running `pg_dumpall` on the current database to get a SQL file containing all data and then importing the dump to an empty standalone postgresql  database running the latest version. Once the import completes stop the database to be upgraded and switch the database volume data and image on the `docker-compose` file with the upgraded one before bringing it back up.
+
+#### Pre-upgrade process
+
+Stop the database to be upgraded and take a consistent copy of the data volume which will later be erased.
+
+#### Upgrade process
+
+1) Run `pg_dumpall` on the database to be upgraded to get a SQL file containing all database data:
+
+```
+root@testapp:~# docker exec -it ab1cdef23g4h pg_dumpall -U testuser > /backups/dump-testapp_db_data.sql
+```
+
+2) Deploy a new PostgreSQL v13 database (with the same database name and username) on an empty volume which we will use to import the data dump taken on the database to be upgraded (the data dump also needs to be shared):
+
+```
+root@testapp:~/testapp$ cat docker-compose.pg13.yml 
+version: "3.7"
+
+volumes:
+  pg13_data:
+    name: zones/volumes/pg13_data
+    driver: zfs
+  dumps:
+    name: zones/volumes/dumps
+    driver: zfs
+secrets:
+  db_password:
+    external: true
+  gcp_credentials:
+    external: true
+networks:
+  database: {}
+
+services:
+  pg13:
+    image: mesoform/postgres-ha:release-13.1.0-0
+    volumes:
+      - pg13_data:/var/lib/postgresql/data
+      - dumps:/dumps
+    environment:
+      - POSTGRES_DB=testdb
+      - POSTGRES_USER=testuser
+      - PG_PASSWORD_FILE=/run/secrets/db_password 
+      - HBA_ADDRESS=10.0.0.0/8
+      - STORAGE_BUCKET=gs://backups/postgres/testdb
+      - GCP_CREDENTIALS=/run/secrets/gcp_credentials
+    secrets:    
+      - source: db_password
+      - source: gcp_credentials
+    deploy:
+      placement:
+        constraints:
+          - node.labels.storage == primary
+```
+```
+root@testapp:~# docker stack deploy -c docker-compose.pg13.yml pg13db
+```
+
+3) Import the data dump to the new database:
+
+```
+root@testapp:~/testapp$ sudo docker exec -it bc2defg34h5i /bin/bash
+
+bash-5.0# psql -U testuser -d testdb < /dumps/dump-testapp_db_data.sql
+```
+
+4) Verify that the tables of testuser have been imported:
+
+```
+testapp-# \dt
+               List of relations
+ Schema |         Name         | Type  | Owner  
+--------+----------------------+-------+---------
+ public | users                | table | testuser
+ public | roles                | table | testuser
+ public | status               | table | testuser
+ public | systems              | table | testuser
+(4 rows)
+
+testapp-# \q
+```
+
+5) Stop database to be upgraded and removed data from the volume with old data structure (remember we have a backup copy in case something goes wrong):
+
+```
+root@testapp:~# docker stack rm testapp
+```
+```
+root@testapp:/volumes/testapp_db_data# rm -rf *
+```
+
+6) Sync upgraded data from the PostgreSQL v13 database to the original database data volume:
+
+```
+root@testapp:~# rsync -av /volumes/testapp_db13_data/ /volumes/testapp_db_data/
+```
+
+7) Edit the original `docker-compose` file to update the database postgres image to v13 and gcp parameters to backup to cloud storage:
+
+````
+root@testapp:~/testapp$ cat docker-compose.yml
+version: "3.7"
+
+volumes:
+  app_data:
+    name: zones/volumes/testapp_data
+    driver: zfs
+  db_data:
+    name: zones/volumes/testapp_db_data
+    driver: zfs
+  db_replica_data:
+    name: zones/volumes/testapp_db_replica_data
+    driver: zfs
+secrets:
+  testapp_db_password:
+    external: true
+  testapp_db_replica_password:
+    external: true
+  gcp_credentials:
+    external: true
+networks:
+  default:
+
+services:
+  app:
+    image: testapp/testapp-prod:1.0.0
+    volumes:
+      - app_data:/testapp
+    ports:
+      - "1234:1234"
+    environment:
+      - DB_HOST=db
+      - DB_PORT_NUMBER=5432
+      - DB_NAME=testdb
+      - DB_USERNAME=testuser
+    deploy:
+      placement:
+        constraints:
+          - node.labels.storage == primary
+  db:
+    image: mesoform/postgres-ha:release-13.1.0-0
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    environment:
+      - PG_MASTER=true
+      - POSTGRES_DB=testdb
+      - POSTGRES_USER=testuser
+      - PG_PASSWORD_FILE=/run/secrets/testapp_db_password
+      - PG_REP_USER=repuser
+      - PG_REP_PASSWORD_FILE=/run/secrets/testapp_db_replica_password
+      - HBA_ADDRESS=10.0.0.0/8
+      - STORAGE_BUCKET=gs://backups/postgres/testapp
+      - GCP_CREDENTIALS=/run/secrets/gcp_credentials
+    secrets:
+      - testapp_db_password
+      - testapp_replica_password
+      - gcp_credentials
+    deploy:
+      placement:
+        constraints:
+          - node.labels.storage == primary
+  db_replica:
+    image: mesoform/postgres-ha:release-13.1.0-0
+    volumes:
+      - db_replica_data:/var/lib/postgresql/data
+    environment:
+      - PG_SLAVE=true
+      - POSTGRES_DB=testdb
+      - POSTGRES_USER=testuser
+      - PG_PASSWORD_FILE=/run/secrets/testapp_db_password
+      - PG_REP_USER=repuser
+      - PG_REP_PASSWORD_FILE=/run/secrets/testapp_db_replica_password
+      - HBA_ADDRESS=10.0.0.0/8
+      - PG_MASTER_HOST=db
+    secrets:
+      - testapp_db_password
+      - testapp_db_replica_password
+    deploy:
+      placement:
+        constraints:
+          - node.labels.storage == secondary
+```
+
+8) Deploy application using the edited compose configuration, check status and verify the application is working as expected.
+
+```
+docker stack deploy -c docker-compose.yml testapp
+```
+```
+root@testapp:~$ sudo docker stack ps testapp
+ID                  NAME                   IMAGE                                                          NODE                DESIRED STATE       CURRENT STATE          ERROR               PORTS                       
+wklerj2344jd        testapp_db_replica.1   mesoform/postgres-ha:release-12.5.0-0                          secondary           Running             Running 2 minutes ago                       
+lclkerk34kl3        testapp_db.1           mesoform/postgres-ha:release-12.5.0-0                          primary             Running             Running 2 minutes ago                       
+kfdk34jll34k        testapp_app.1          testapp/testapp-prod:1.0.0                                     primary             Running             Running 2 minutes ago  
+```
+
 ## Official stuff
-- [Contributing](https://github.com/mesoform/terraform-infrastructure-modules/CONTRIBUTING.md)
-- [Licence](https://github.com/mesoform/terraform-infrastructure-modules/LICENSE)
+
+- [Contributing](https://github.com/mesoform/terraform-infrastructure-modules/blob/main/CONTRIBUTING.md)
+- [Licence](https://github.com/mesoform/terraform-infrastructure-modules/blob/main/LICENSE)
