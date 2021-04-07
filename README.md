@@ -43,7 +43,7 @@ To restore a backup from GCS (Google Cloud Storage) set the following variables 
       - RESTORE_BACKUP=true                 # Set to true
       - BACKUP_NAME=ab123c4d56e7-28012021   # To specify the name of the GCS backup to be restored (the name corresponds to the container-date when the backup was taken)
 
-See the example in docker-compose-example.yml to create a PostgreSQL HA master/slave setup with base backups and WAL archiving to GCS and Recovery:
+See the example in docker-compose-example.yml to create a PostgreSQL HA master/replica setup with control over backups and WAL archiving to GCS and backup restoration:
 
 ```yamlex
 version: "3.7"
@@ -95,7 +95,7 @@ services:
       placement:
         constraints:
         - node.labels.type == primary
-  pg_slave:
+  pg_replica:
     image: mesoform/postgres-ha:13-latest
     volumes:
       - pg_replica:/var/lib/postgresql/data
