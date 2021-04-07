@@ -157,7 +157,7 @@ Stop the database to be upgraded and take a consistent copy of the data volume w
 root@testapp:~# docker exec -it ab1cdef23g4h pg_dumpall -U testuser > /backups/dump-testapp_db_data.sql
 ```
 
-2) Deploy a new PostgreSQL v13 database (with the same database name and username) on an empty volume which we will use to import the data dump taken on the database to be upgraded (the data dump also needs to be shared):
+2) Deploy a new PostgreSQL v13 database (with the same database name and username) on an empty volume which will be used to import the data dump taken on the database to be upgraded (the volume containing the data dump also needs to be shared):
 
 ```
 root@testapp:~/testapp$ cat docker-compose.pg13.yml 
@@ -211,7 +211,7 @@ root@testapp:~/testapp$ sudo docker exec -it bc2defg34h5i /bin/bash
 bash-5.0# psql -U testuser -d testdb < /dumps/dump-testapp_db_data.sql
 ```
 
-4) Verify that the tables of testuser have been imported:
+4) Verify that the tables of `testuser` have been imported:
 
 ```
 testapp-# \dt
@@ -236,7 +236,7 @@ root@testapp:~# docker stack rm testapp
 root@testapp:/volumes/testapp_db_data# rm -rf *
 ```
 
-6) Sync upgraded data from the PostgreSQL v13 database to the original database data volume:
+6) Sync upgraded data volume from the PostgreSQL v13 database to the old database data volume:
 
 ```
 root@testapp:~# rsync -av /volumes/testapp_db13_data/ /volumes/testapp_db_data/
@@ -244,7 +244,7 @@ root@testapp:~# rsync -av /volumes/testapp_db13_data/ /volumes/testapp_db_data/
 
 7) Edit the original `docker-compose` file to update the database postgres image to v13 and gcp parameters to backup to cloud storage:
 
-````
+```
 root@testapp:~/testapp$ cat docker-compose.yml
 version: "3.7"
 
@@ -336,9 +336,9 @@ docker stack deploy -c docker-compose.yml testapp
 ```
 root@testapp:~$ sudo docker stack ps testapp
 ID                  NAME                   IMAGE                                                          NODE                DESIRED STATE       CURRENT STATE          ERROR               PORTS                       
-wklerj2344jd        testapp_db_replica.1   mesoform/postgres-ha:release-12.5.0-0                          secondary           Running             Running 2 minutes ago                       
-lclkerk34kl3        testapp_db.1           mesoform/postgres-ha:release-12.5.0-0                          primary             Running             Running 2 minutes ago                       
-kfdk34jll34k        testapp_app.1          testapp/testapp-prod:1.0.0                                     primary             Running             Running 2 minutes ago  
+wklerj2344jd        testapp_db_replica.1   mesoform/postgres-ha:release-13.1.0-0                          secondary           Running             Running 2 minutes ago                       
+lclkerk34kl3        testapp_db.1           mesoform/postgres-ha:release-13.1.0-0                          primary             Running             Running 2 minutes ago                       
+mfdk34jll34k        testapp_app.1          testapp/testapp-prod:1.0.0                                     primary             Running             Running 2 minutes ago  
 ```
 
 ## Official stuff
