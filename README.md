@@ -14,7 +14,7 @@ To create a MASTER instance as part of a PostgreSQL HA setup set the following v
       - POSTGRES_DB=testdb
       - PG_REP_USER=testrep
       - PG_REP_PASSWORD_FILE=/run/secrets/db_replica_password   # docker secret with the postgres replica user password
-      - HBA_ADDRESS=10.0.0.0/8
+      - HBA_ADDRESS=10.0.0.0/8   # Host name or IP address range to allow replication connections from the slave (Replication Host-Based Authentication)
       
 To create a REPLICA instance as part of a PostgreSQL HA setup set the following variables (set PG_SLAVE to true):
 
@@ -25,7 +25,7 @@ To create a REPLICA instance as part of a PostgreSQL HA setup set the following 
       - PG_REP_USER=testrep
       - PG_REP_PASSWORD_FILE=/run/secrets/db_replica_password   # docker secret with the postgres replica user password
       - PG_MASTER_HOST=pg_master # pg_master service name or swarm node private IP where the pg_master service is running
-      - HBA_ADDRESS=10.0.0.0/8
+      - HBA_ADDRESS=10.0.0.0/8   # Host name or IP address range to allow replication connections from the master (Replication Host-Based Authentication)
 
 To create a standalone PostgreSQL instance set only the following variables (PG_MASTER or PG_SLAVE vars should not be set):
 
@@ -38,14 +38,116 @@ To run backups and WAL archiving to GCS (Google Cloud Storage) set the following
       - STORAGE_BUCKET=gs://postgresql13/wal-g         # To specify the GCS bucket
       - GCP_CREDENTIALS=/run/secrets/gcp_credentials   # To specify the docker secret with the service account key that has access to the GCS bucket
       
-To restore a backup from GCS (Google Cloud Storage) set the following variables (backups can be restored on a MASTER or STANDALONE instance):
+See the example in docker-compose-example.yml to create a PostgreSQL HA master/replica setup with control over backups and WAL archiving to GCS:
+
+```
+version: "3.7"
+secrets:
+  db_replica_password:
+    external: true
+  db_password:
+    external: true
+  gcp_credentials:
+    external: true
+
+services:
+  pg_master:
+    image: mesoform/postgres-ha:13-latest
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    environment:
+      - PG_MASTER=true
+      - POSTGRES_USER=testuser
+      - PG_PASSWORD_FILE=/run/secrets/db_password
+      - POSTGRES_DB=testdb
+      - PG_REP_USER=testrep
+      - PG_REP_PASSWORD_FILE=/run/secrets/db_replica_password
+      - HBA_ADDRESS=10.0.0.0/8
+      - STORAGE_BUCKET=gs://postgresql13/wal-g
+      - GCP_CREDENTIALS=/run/secrets/gcp_credentials
+    ports:
+      - "5432:5432"
+    secrets:
+      - source: db_replica_password
+        uid: "70"
+        gid: "70"
+        mode: 0550
+      - source: db_password
+        uid: "70"
+        gid: "70"
+        mode: 0550
+      - source: gcp_credentials
+        uid: "70"
+        gid: "70"
+        mode: 0550
+    networks:
+      database:
+        aliases:
+          - pg_cluster
+    deploy:
+      placement:
+        constraints:
+        - node.labels.type == primary
+  pg_replica:
+    image: mesoform/postgres-ha:13-latest
+    volumes:
+      - pg_replica:/var/lib/postgresql/data
+    environment:
+      - PG_SLAVE=true
+      - POSTGRES_USER=testuser
+      - PG_PASSWORD_FILE=/run/secrets/db_password
+      - POSTGRES_DB=testdb
+      - PG_REP_USER=testrep
+      - PG_REP_PASSWORD_FILE=/run/secrets/db_replica_password
+      - PG_MASTER_HOST=pg_master  # This needs to be the swarm node private IP instead of the service name (pg_master) which resolves to the service IP
+      - HBA_ADDRESS=10.0.0.0/8
+    secrets:
+      - source: db_replica_password
+        uid: "70"
+        gid: "70"
+        mode: 0550
+      - source: db_password
+        uid: "70"
+        gid: "70"
+        mode: 0550
+    networks:
+      database:
+        aliases:
+          - pg_cluster
+    deploy:
+      placement:
+        constraints:
+        - node.labels.type == secondary
+
+networks:
+  database: {}
+
+volumes:
+  pg_data: {}
+  pg_replica: {}
+```
+
+Run with:
+
+```shell script
+docker stack deploy -c docker-compose-example.yml test_pg13ha
+```
+
+## How to restore from a backup
+
+To restore a backup from GCS (Google Cloud Storage) set the following variables on the docker compose file (backups can be restored on a MASTER or STANDALONE instance):
 
       - RESTORE_BACKUP=true                 # Set to true
       - BACKUP_NAME=ab123c4d56e7-28012021   # To specify the name of the GCS backup to be restored (the name corresponds to the container-date when the backup was taken)
 
-See the example in docker-compose-example.yml to create a PostgreSQL HA master/replica setup with control over backups and WAL archiving to GCS and backup restoration:
+Case example:
 
-```yamlex
+A database container `ab123c4d56e7` was created on `28012021` and backups were pushed to GCS bucket `gs://postgresql13/wal-g`
+The created backup named `ab123c4d56e7-28012021` can be restored from the specified GCS bucket name.
+
+See the example in docker-compose-restore.yml where the restore parameters RESTORE_BACKUP and BACKUP_NAME have been added to the master database:
+
+```
 version: "3.7"
 secrets:
   db_replica_password:
@@ -138,8 +240,27 @@ volumes:
 Run with:
 
 ```shell script
-docker stack deploy -c docker-compose-example.yml test_pg13ha
+docker stack deploy -c docker-compose-restore.yml restore_pg13
 ```
+Master database container logs:
+```
+root@restore:~$ sudo docker logs 9034a5c761g3
+Using password file
+Detected running as root user, changing to postgres
+Using password file
+Initialising wal-g restore script variables
+Restoring backup ab123c4d56e7-28012021
+GOOGLE_APPLICATION_CREDENTIALS: /run/secrets/gcp_credentials
+WALG_GS_PREFIX: gs://postgresql13/wal-g/ab123c4d56e7-28012021
+PGUSER: testuser
+PGDATABASE: testdb
+Running command /usr/local/bin/wal-g backup-fetch /var/lib/postgresql/data LATEST
+...
+```
+
+This is thought as a one-off process to restore a database backup. If restore parameters RESTORE_BACKUP and BACKUP_NAME are kept in a compose file the restore process will be performed on each restart.
+
+When restoring a backup the database environment parameters and database instance type (MASTER/SLAVE or STANDALONE instance) should be the same as the one from which the backup was taken. I.e: A backup taken on a master/slave setup can't be restored on a standalone instance.
 
 ## How to upgrade to latest PostgreSQL version
 
