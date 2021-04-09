@@ -345,19 +345,19 @@ testapp-# \dt
 testapp-# \q
 ```
 
-5) Stop database to be upgraded and removed data from the volume with old data structure (remember we have a backup copy in case something goes wrong):
+5) Stop database to be upgraded and remove data volume with old data structure (we still have a backup copy in case something goes wrong):
 
 ```
 root@testapp:~# docker stack rm testapp
 ```
 ```
-root@testapp:/volumes/testapp_db_data# rm -rf *
+root@testapp:~# rm -rf /volumes/testapp_db_data
 ```
 
 6) Move upgraded data volume from the PostgreSQL v13 database to the old database data volume:
 
 ```
-root@testapp:~# mv -v /volumes/testapp_db13_data/* /volumes/testapp_db_data/
+root@testapp:~# mv -v /volumes/testapp_db13_data /volumes/testapp_db_data/
 ```
 
 7) Edit the original `docker-compose` file to update the database postgres image to v13 and gcp parameters to backup to cloud storage:
