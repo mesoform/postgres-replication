@@ -259,8 +259,7 @@ PGDATABASE: testdb
 Running command /usr/local/bin/wal-g backup-fetch /var/lib/postgresql/data LATEST
 ...
 ```
-**Important
-**This is as a one-off process to restore a database backup. If restore parameters RESTORE_BACKUP and BACKUP_NAME are kept in a compose file the restore process will be performed on each restart.
+**Important:** This is as a one-off process to restore a database backup. If restore parameters RESTORE_BACKUP and BACKUP_NAME are kept in a compose file the restore process will be performed on each restart.
 
 When restoring a backup the database environment parameters and database instance type (MASTER/SLAVE or STANDALONE instance) should be the same as the one from which the backup was taken. I.e: A backup taken on a master/slave setup can't be restored on a standalone instance.
 
