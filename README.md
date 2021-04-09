@@ -138,9 +138,11 @@ docker stack deploy -c docker-compose-example.yml test_pg13ha
 To restore a backup from GCS (Google Cloud Storage) set the following variables on the docker compose file (backups can be restored on a MASTER or STANDALONE instance):
 
       - RESTORE_BACKUP=true                 # Set to true
-      - BACKUP_NAME=ab123c4d56e7-28012021   # To specify the name of the GCS backup to be restored (the name corresponds to the container-date when the backup was taken)
+      - BACKUP_NAME=ab123c4d56e7-28012021   # To specify the name of the GCS backup to be restored (the name corresponds to the <container-id>-<date> -i.e: where/when- the backup was taken)
 
-Case example:
+The LATEST base backup available will be restored and all existing WAL archives will be applied to it.
+
+####Case example:
 
 A database container `ab123c4d56e7` was created on `28012021` and backups were pushed to GCS bucket `gs://postgresql13/wal-g`
 The created backup named `ab123c4d56e7-28012021` can be restored from the specified GCS bucket name.
@@ -278,7 +280,7 @@ Stop the database to be upgraded and take a consistent copy of the data volume w
 root@testapp:~# docker exec -it ab1cdef23g4h pg_dumpall -U testuser > /backups/dump-testapp_db_data.sql
 ```
 
-2) Deploy a new PostgreSQL v13 database (with the same database name and username) on an empty volume which will be used to import the data dump taken on the database to be upgraded (the volume containing the data dump also needs to be shared):
+2) Deploy a new PostgreSQL v13 database (with the same database name and username) on an empty volume which will be used to import the data dump taken on the database to be upgraded:
 
 ```
 root@testapp:~/testapp$ cat docker-compose.pg13.yml 
@@ -287,9 +289,6 @@ version: "3.7"
 volumes:
   pg13_data:
     name: zones/volumes/pg13_data
-    driver: zfs
-  dumps:
-    name: zones/volumes/dumps
     driver: zfs
 secrets:
   db_password:
@@ -304,7 +303,6 @@ services:
     image: mesoform/postgres-ha:release-13.1.0-0
     volumes:
       - pg13_data:/var/lib/postgresql/data
-      - dumps:/dumps
     environment:
       - POSTGRES_DB=testdb
       - POSTGRES_USER=testuser
@@ -324,16 +322,15 @@ services:
 root@testapp:~# docker stack deploy -c docker-compose.pg13.yml pg13db
 ```
 
-3) Import the data dump to the new database:
+3) Import the data dump taken on the first step to the new database:
 
 ```
-root@testapp:~/testapp$ sudo docker exec -it bc2defg34h5i /bin/bash
-
-bash-5.0# psql -U testuser -d testdb < /dumps/dump-testapp_db_data.sql
+root@testapp:~/testapp$ sudo docker exec -i bc2defg34h5i psql -U testuser -d testdb < /backups/dump-testapp_db_data.sql
 ```
 
 4) Verify that the tables of `testuser` have been imported:
 
+E.g:
 ```
 testapp-# \dt
                List of relations
