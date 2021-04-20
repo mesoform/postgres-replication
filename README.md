@@ -10,7 +10,7 @@ To create a MASTER instance as part of a PostgreSQL HA setup set the following v
 
       - PG_MASTER=true
       - POSTGRES_USER=testuser
-      - PG_PASSWORD_FILE=/run/secrets/db_password               # docker secret with the postgres user password
+      - POSTGRES_PASSWORD_FILE=/run/secrets/db_password               # docker secret with the postgres user password
       - POSTGRES_DB=testdb
       - PG_REP_USER=testrep
       - PG_REP_PASSWORD_FILE=/run/secrets/db_replica_password   # docker secret with the postgres replica user password
@@ -20,7 +20,7 @@ To create a REPLICA instance as part of a PostgreSQL HA setup set the following 
 
       - PG_SLAVE=true
       - POSTGRES_USER=testuser
-      - PG_PASSWORD_FILE=/run/secrets/db_password               # docker secret with the postgres user password
+      - POSTGRES_PASSWORD_FILE=/run/secrets/db_password               # docker secret with the postgres user password
       - POSTGRES_DB=testdb
       - PG_REP_USER=testrep
       - PG_REP_PASSWORD_FILE=/run/secrets/db_replica_password   # docker secret with the postgres replica user password
@@ -30,7 +30,7 @@ To create a REPLICA instance as part of a PostgreSQL HA setup set the following 
 To create a standalone PostgreSQL instance set only the following variables (PG_MASTER or PG_SLAVE vars should not be set):
 
       - POSTGRES_USER=testuser
-      - PG_PASSWORD_FILE=/run/secrets/db_password               # docker secret with the postgres user password
+      - POSTGRES_PASSWORD_FILE=/run/secrets/db_password               # docker secret with the postgres user password
       - POSTGRES_DB=testdb
 
 To run backups and WAL archiving to GCS (Google Cloud Storage) set the following variables (backups will be taken on a MASTER or standalone instance):
@@ -58,7 +58,7 @@ services:
     environment:
       - PG_MASTER=true
       - POSTGRES_USER=testuser
-      - PG_PASSWORD_FILE=/run/secrets/db_password
+      - POSTGRES_PASSWORD_FILE=/run/secrets/db_password
       - POSTGRES_DB=testdb
       - PG_REP_USER=testrep
       - PG_REP_PASSWORD_FILE=/run/secrets/db_replica_password
@@ -95,7 +95,7 @@ services:
     environment:
       - PG_SLAVE=true
       - POSTGRES_USER=testuser
-      - PG_PASSWORD_FILE=/run/secrets/db_password
+      - POSTGRES_PASSWORD_FILE=/run/secrets/db_password
       - POSTGRES_DB=testdb
       - PG_REP_USER=testrep
       - PG_REP_PASSWORD_FILE=/run/secrets/db_replica_password
@@ -167,7 +167,7 @@ services:
     environment:
       - PG_MASTER=true
       - POSTGRES_USER=testuser
-      - PG_PASSWORD_FILE=/run/secrets/db_password
+      - POSTGRES_PASSWORD_FILE=/run/secrets/db_password
       - POSTGRES_DB=testdb
       - PG_REP_USER=testrep
       - PG_REP_PASSWORD_FILE=/run/secrets/db_replica_password
@@ -206,7 +206,7 @@ services:
     environment:
       - PG_SLAVE=true
       - POSTGRES_USER=testuser
-      - PG_PASSWORD_FILE=/run/secrets/db_password
+      - POSTGRES_PASSWORD_FILE=/run/secrets/db_password
       - POSTGRES_DB=testdb
       - PG_REP_USER=testrep
       - PG_REP_PASSWORD_FILE=/run/secrets/db_replica_password
@@ -305,7 +305,7 @@ services:
     environment:
       - POSTGRES_DB=testdb
       - POSTGRES_USER=testuser
-      - PG_PASSWORD_FILE=/run/secrets/db_password 
+      - POSTGRES_PASSWORD_FILE=/run/secrets/db_password 
       - HBA_ADDRESS=10.0.0.0/8
       - STORAGE_BUCKET=gs://backups/postgres/testdb
       - GCP_CREDENTIALS=/run/secrets/gcp_credentials
@@ -409,7 +409,7 @@ services:
       - PG_MASTER=true
       - POSTGRES_DB=testdb
       - POSTGRES_USER=testuser
-      - PG_PASSWORD_FILE=/run/secrets/testapp_db_password
+      - POSTGRES_PASSWORD_FILE=/run/secrets/testapp_db_password
       - PG_REP_USER=testrep
       - PG_REP_PASSWORD_FILE=/run/secrets/testapp_db_replica_password
       - HBA_ADDRESS=10.0.0.0/8
@@ -431,7 +431,7 @@ services:
       - PG_SLAVE=true
       - POSTGRES_DB=testdb
       - POSTGRES_USER=testuser
-      - PG_PASSWORD_FILE=/run/secrets/testapp_db_password
+      - POSTGRES_PASSWORD_FILE=/run/secrets/testapp_db_password
       - PG_REP_USER=testrep
       - PG_REP_PASSWORD_FILE=/run/secrets/testapp_db_replica_password
       - HBA_ADDRESS=10.0.0.0/8

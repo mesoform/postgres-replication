@@ -15,7 +15,7 @@ services:
     environment:
       - PG_MASTER=true
       - POSTGRES_USER=testuser
-      - PG_PASSWORD_FILE=/run/secrets/db_password
+      - POSTGRES_PASSWORD_FILE=/run/secrets/db_password
       - POSTGRES_DB=testdb
       - PG_REP_USER=testrep
       - PG_REP_PASSWORD_FILE=/run/secrets/db_replica_password
@@ -52,7 +52,7 @@ services:
     environment:
       - PG_SLAVE=true
       - POSTGRES_USER=testuser
-      - PG_PASSWORD_FILE=/run/secrets/db_password
+      - POSTGRES_PASSWORD_FILE=/run/secrets/db_password
       - POSTGRES_DB=testdb
       - PG_REP_USER=testrep
       - PG_REP_PASSWORD_FILE=/run/secrets/db_replica_password

@@ -12,7 +12,7 @@ services:
       - pg_data:/var/lib/postgresql/data
     environment:
       - POSTGRES_USER=testuser
-      - PG_PASSWORD_FILE=/run/secrets/db_password
+      - POSTGRES_PASSWORD_FILE=/run/secrets/db_password
       - POSTGRES_DB=testdb
       - STORAGE_BUCKET=gs://postgresql13/wal-g
       - GCP_CREDENTIALS=/run/secrets/gcp_credentials
