@@ -15,15 +15,13 @@ services:
     environment:
       - PG_MASTER=true
       - POSTGRES_USER=testuser
-      - PG_PASSWORD_FILE=/run/secrets/db_password
+      - POSTGRES_PASSWORD_FILE=/run/secrets/db_password
       - POSTGRES_DB=testdb
       - PG_REP_USER=testrep
       - PG_REP_PASSWORD_FILE=/run/secrets/db_replica_password
       - HBA_ADDRESS=10.0.0.0/8
       - STORAGE_BUCKET=gs://postgresql13/wal-g
       - GCP_CREDENTIALS=/run/secrets/gcp_credentials
-      - RESTORE_BACKUP=true
-      - BACKUP_NAME=ab123c4d56e7-28012021
     ports:
       - "5432:5432"
     secrets:
@@ -54,7 +52,7 @@ services:
     environment:
       - PG_SLAVE=true
       - POSTGRES_USER=testuser
-      - PG_PASSWORD_FILE=/run/secrets/db_password
+      - POSTGRES_PASSWORD_FILE=/run/secrets/db_password
       - POSTGRES_DB=testdb
       - PG_REP_USER=testrep
       - PG_REP_PASSWORD_FILE=/run/secrets/db_replica_password
