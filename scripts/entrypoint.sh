@@ -10,9 +10,9 @@ export PG_SLAVE=${PG_SLAVE:false}
 export RESTORE_BACKUP=${RESTORE_BACKUP:false}
 export BACKUP_NAME=$BACKUP_NAME
 
-if [[ -n "${PG_PASSWORD_FILE}" ]]; then
+if [[ -n "${POSTGRES_PASSWORD_FILE}" ]]; then
   echo "Using password file"
-  POSTGRES_PASSWORD=$(cat "${PG_PASSWORD_FILE}")
+  POSTGRES_PASSWORD=$(cat "${POSTGRES_PASSWORD_FILE}")
   export POSTGRES_PASSWORD
 fi
 
