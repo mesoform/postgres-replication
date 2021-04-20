@@ -147,7 +147,7 @@ The LATEST base backup available will be restored and all existing WAL archives 
 A database container `ab123c4d56e7` was created on `28012021` and backups were pushed to GCS bucket `gs://postgresql13/wal-g`
 The created backup named `ab123c4d56e7-28012021` can be restored from the specified GCS bucket name.
 
-See the example in docker-compose-restore.yml where the restore parameters RESTORE_BACKUP and BACKUP_NAME have been added to the master database:
+See the example below where the restore parameters RESTORE_BACKUP and BACKUP_NAME have been added to the master database on the `docker-compose-example.yml` file:
 
 ```
 version: "3.7"

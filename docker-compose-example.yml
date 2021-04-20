@@ -45,7 +45,7 @@ services:
       placement:
         constraints:
         - node.labels.type == primary
-  pg_slave:
+  pg_replica:
     image: mesoform/postgres-ha:13-latest
     volumes:
       - pg_replica:/var/lib/postgresql/data
@@ -74,7 +74,7 @@ services:
     deploy:
       placement:
         constraints:
-        - node.labels.type != primary
+        - node.labels.type == secondary
 
 networks:
   database: {}
