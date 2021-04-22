@@ -1,20 +1,17 @@
 #!/bin/bash
 
-export PG_REP_PASSWORD_FILE=$PG_REP_PASSWORD_FILE
-export HBA_ADDRESS=$HBA_ADDRESS
 export POSTGRES_USER=$POSTGRES_USER
 export POSTGRES_DB=$POSTGRES_DB
-export PG_REP_USER=$PG_REP_USER
+export PGPORT=$PGPORT
 export PG_MASTER=${PG_MASTER:false}
 export PG_SLAVE=${PG_SLAVE:false}
+export PG_REP_USER=$PG_REP_USER
+export PG_REP_PASSWORD_FILE=$PG_REP_PASSWORD_FILE
+export HBA_ADDRESS=$HBA_ADDRESS
+export PG_MASTER_HOST=$PG_MASTER_HOST
 export RESTORE_BACKUP=${RESTORE_BACKUP:false}
 export BACKUP_NAME=$BACKUP_NAME
 
-if [[ -n "${POSTGRES_PASSWORD_FILE}" ]]; then
-  echo "Using password file"
-  POSTGRES_PASSWORD=$(cat "${POSTGRES_PASSWORD_FILE}")
-  export POSTGRES_PASSWORD
-fi
 
 if [[ ${PG_MASTER^^} == TRUE && ${PG_SLAVE^^} == TRUE ]]; then
   echo "Both \$PG_MASTER and \$PG_SLAVE cannot be true"

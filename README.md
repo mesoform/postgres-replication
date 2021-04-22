@@ -8,30 +8,33 @@ Variables usage:
 
 To create a MASTER instance as part of a PostgreSQL HA setup set the following variables (set PG_MASTER to true):
 
-      - PG_MASTER=true
-      - POSTGRES_USER=testuser
-      - POSTGRES_PASSWORD_FILE=/run/secrets/db_password               # docker secret with the postgres user password
-      - POSTGRES_DB=testdb
-      - PG_REP_USER=testrep
+      - PG_MASTER=true                                          # set to true if this is the master instance on a postgres HA cluster
+      - POSTGRES_USER=testuser                                  # master database username
+      - POSTGRES_PASSWORD_FILE=/run/secrets/db_password         # docker secret with the postgres user password
+      - POSTGRES_DB=testdb                                      # master database name
+      - PGPORT=5432                                             # master database port; defaults to 5432 if not set
+      - PG_REP_USER=testrep                                     # replication username
       - PG_REP_PASSWORD_FILE=/run/secrets/db_replica_password   # docker secret with the postgres replica user password
       - HBA_ADDRESS=10.0.0.0/8   # Host name or IP address range to allow replication connections from the slave (Replication Host-Based Authentication)
       
 To create a REPLICA instance as part of a PostgreSQL HA setup set the following variables (set PG_SLAVE to true):
 
-      - PG_SLAVE=true
-      - POSTGRES_USER=testuser
-      - POSTGRES_PASSWORD_FILE=/run/secrets/db_password               # docker secret with the postgres user password
-      - POSTGRES_DB=testdb
-      - PG_REP_USER=testrep
+      - PG_SLAVE=true                                           # set to true if this is the replica instance on a postgres HA cluster
+      - POSTGRES_USER=testuser                                  # master database username
+      - POSTGRES_PASSWORD_FILE=/run/secrets/db_password         # docker secret with the postgres user password
+      - POSTGRES_DB=testdb                                      # master database name
+      - PGPORT=5432                                             # master database port; defaults to 5432 if not set
+      - PG_REP_USER=testrep                                     # replication username
       - PG_REP_PASSWORD_FILE=/run/secrets/db_replica_password   # docker secret with the postgres replica user password
       - PG_MASTER_HOST=pg_master # pg_master service name or swarm node private IP where the pg_master service is running
       - HBA_ADDRESS=10.0.0.0/8   # Host name or IP address range to allow replication connections from the master (Replication Host-Based Authentication)
 
 To create a standalone PostgreSQL instance set only the following variables (PG_MASTER or PG_SLAVE vars should not be set):
 
-      - POSTGRES_USER=testuser
-      - POSTGRES_PASSWORD_FILE=/run/secrets/db_password               # docker secret with the postgres user password
-      - POSTGRES_DB=testdb
+      - POSTGRES_USER=testuser                                  # database username
+      - POSTGRES_PASSWORD_FILE=/run/secrets/db_password         # docker secret with the postgres user password
+      - POSTGRES_DB=testdb                                      # database name
+      - PGPORT=5432                                             # master database port; defaults to 5432 if not set
 
 To run backups and WAL archiving to GCS (Google Cloud Storage) set the following variables (backups will be taken on a MASTER or standalone instance):
 
@@ -60,6 +63,7 @@ services:
       - POSTGRES_USER=testuser
       - POSTGRES_PASSWORD_FILE=/run/secrets/db_password
       - POSTGRES_DB=testdb
+      - PGPORT=5432 
       - PG_REP_USER=testrep
       - PG_REP_PASSWORD_FILE=/run/secrets/db_replica_password
       - HBA_ADDRESS=10.0.0.0/8
@@ -97,9 +101,10 @@ services:
       - POSTGRES_USER=testuser
       - POSTGRES_PASSWORD_FILE=/run/secrets/db_password
       - POSTGRES_DB=testdb
+      - PGPORT=5432
       - PG_REP_USER=testrep
       - PG_REP_PASSWORD_FILE=/run/secrets/db_replica_password
-      - PG_MASTER_HOST=pg_master  # This needs to be the swarm node private IP instead of the service name (pg_master) which resolves to the service IP
+      - PG_MASTER_HOST=pg_master
       - HBA_ADDRESS=10.0.0.0/8
     secrets:
       - source: db_replica_password
@@ -169,6 +174,7 @@ services:
       - POSTGRES_USER=testuser
       - POSTGRES_PASSWORD_FILE=/run/secrets/db_password
       - POSTGRES_DB=testdb
+      - PGPORT=5432
       - PG_REP_USER=testrep
       - PG_REP_PASSWORD_FILE=/run/secrets/db_replica_password
       - HBA_ADDRESS=10.0.0.0/8
@@ -208,9 +214,10 @@ services:
       - POSTGRES_USER=testuser
       - POSTGRES_PASSWORD_FILE=/run/secrets/db_password
       - POSTGRES_DB=testdb
+      - PGPORT=5432
       - PG_REP_USER=testrep
       - PG_REP_PASSWORD_FILE=/run/secrets/db_replica_password
-      - PG_MASTER_HOST=pg_master  # This needs to be the swarm node private IP instead of the service name (pg_master) which resolves to the service IP
+      - PG_MASTER_HOST=pg_master
       - HBA_ADDRESS=10.0.0.0/8
     secrets:
       - source: db_replica_password
@@ -256,6 +263,7 @@ GOOGLE_APPLICATION_CREDENTIALS: /run/secrets/gcp_credentials
 WALG_GS_PREFIX: gs://postgresql12/wal-g/ab123c4d56e7-28012021
 PGUSER: testuser
 PGDATABASE: testdb
+PGPORT: 5432
 Running command /usr/local/bin/wal-g backup-fetch /var/lib/postgresql/data LATEST
 ...
 ```
@@ -305,6 +313,7 @@ services:
     environment:
       - POSTGRES_DB=testdb
       - POSTGRES_USER=testuser
+      - PGPORT: 5432
       - POSTGRES_PASSWORD_FILE=/run/secrets/db_password 
       - HBA_ADDRESS=10.0.0.0/8
       - STORAGE_BUCKET=gs://backups/postgres/testdb
@@ -408,6 +417,7 @@ services:
     environment:
       - PG_MASTER=true
       - POSTGRES_DB=testdb
+      - PGPORT=5432
       - POSTGRES_USER=testuser
       - POSTGRES_PASSWORD_FILE=/run/secrets/testapp_db_password
       - PG_REP_USER=testrep
@@ -430,6 +440,7 @@ services:
     environment:
       - PG_SLAVE=true
       - POSTGRES_DB=testdb
+      - PGPORT=5432
       - POSTGRES_USER=testuser
       - POSTGRES_PASSWORD_FILE=/run/secrets/testapp_db_password
       - PG_REP_USER=testrep

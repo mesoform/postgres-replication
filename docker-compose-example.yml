@@ -17,6 +17,7 @@ services:
       - POSTGRES_USER=testuser
       - POSTGRES_PASSWORD_FILE=/run/secrets/db_password
       - POSTGRES_DB=testdb
+      - PGPORT=5432
       - PG_REP_USER=testrep
       - PG_REP_PASSWORD_FILE=/run/secrets/db_replica_password
       - HBA_ADDRESS=10.0.0.0/8
@@ -54,9 +55,10 @@ services:
       - POSTGRES_USER=testuser
       - POSTGRES_PASSWORD_FILE=/run/secrets/db_password
       - POSTGRES_DB=testdb
+      - PGPORT=5432
       - PG_REP_USER=testrep
       - PG_REP_PASSWORD_FILE=/run/secrets/db_replica_password
-      - PG_MASTER_HOST=pg_master  # This needs to be the swarm node private IP instead of the service name (pg_master) which resolves to the service IP
+      - PG_MASTER_HOST=pg_master
       - HBA_ADDRESS=10.0.0.0/8
     secrets:
       - source: db_replica_password
