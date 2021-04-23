@@ -17,6 +17,7 @@ services:
       - POSTGRES_USER=testuser
       - POSTGRES_PASSWORD_FILE=/run/secrets/db_password
       - POSTGRES_DB=testdb
+      - PGPORT=5432
       - PG_REP_USER=testrep
       - PG_REP_PASSWORD_FILE=/run/secrets/db_replica_password
       - HBA_ADDRESS=10.0.0.0/8
@@ -45,7 +46,7 @@ services:
       placement:
         constraints:
         - node.labels.type == primary
-  pg_slave:
+  pg_replica:
     image: mesoform/postgres-ha:13-latest
     volumes:
       - pg_replica:/var/lib/postgresql/data
@@ -54,6 +55,7 @@ services:
       - POSTGRES_USER=testuser
       - POSTGRES_PASSWORD_FILE=/run/secrets/db_password
       - POSTGRES_DB=testdb
+      - PGPORT=5432
       - PG_REP_USER=testrep
       - PG_REP_PASSWORD_FILE=/run/secrets/db_replica_password
       - PG_MASTER_HOST=pg_master  # This needs to be the swarm node private IP instead of the service name (pg_master) which resolves to the service IP
@@ -74,7 +76,7 @@ services:
     deploy:
       placement:
         constraints:
-        - node.labels.type != primary
+        - node.labels.type == secondary
 
 networks:
   database: {}
