@@ -15,7 +15,7 @@ until ping -c 1 -W 1 "${PG_MASTER_HOST:?missing environment variable. PG_MASTER_
   sleep 1s
 done
 
-until pg_basebackup -h "${PG_MASTER_HOST}" -D "${PGDATA}" -U "${PG_REP_USER}" -vP -W; do
+until pg_basebackup -h "${PG_MASTER_HOST}" -p "${PGPORT}" -D "${PGDATA}" -U "${PG_REP_USER}" -vP -W; do
   echo "Waiting for master to connect..."
   sleep 1s
 done
@@ -23,7 +23,7 @@ done
 touch "${PGDATA}"/standby.signal
 
 cat >"${PGDATA}"/postgresql.conf <<EOF
-primary_conninfo = 'host=$PG_MASTER_HOST port=${PG_MASTER_PORT:-5432} user=$PG_REP_USER password=$PG_REP_PASSWORD'
+primary_conninfo = 'host=$PG_MASTER_HOST port=$PGPORT user=$PG_REP_USER password=$PG_REP_PASSWORD'
 EOF
 chown postgres. "${PGDATA}" -R
 chmod 700 "${PGDATA}" -R
