@@ -2,19 +2,32 @@
 
 export POSTGRES_USER=$POSTGRES_USER
 export POSTGRES_DB=$POSTGRES_DB
-export PGPORT=$PGPORT
+export PGPORT=${PGPORT:-5432}
 export PG_MASTER=${PG_MASTER:false}
 export PG_SLAVE=${PG_SLAVE:false}
 export PG_REP_USER=$PG_REP_USER
 export PG_REP_PASSWORD_FILE=$PG_REP_PASSWORD_FILE
 export HBA_ADDRESS=$HBA_ADDRESS
 export PG_MASTER_HOST=$PG_MASTER_HOST
+export BACKUPS=${BACKUPS:false}
+export STORAGE_BUCKET=$STORAGE_BUCKET
+export GCP_CREDENTIALS=$GCP_CREDENTIALS
 export RESTORE_BACKUP=${RESTORE_BACKUP:false}
 export BACKUP_NAME=$BACKUP_NAME
 
 
 if [[ ${PG_MASTER^^} == TRUE && ${PG_SLAVE^^} == TRUE ]]; then
   echo "Both \$PG_MASTER and \$PG_SLAVE cannot be true"
+  exit 1
+fi
+
+if [[ ${BACKUPS^^} == TRUE ]] && [[ -z ${STORAGE_BUCKET} || -z ${GCP_CREDENTIALS} ]]; then
+  echo "GCS bucket and service account credentials are needed to store backups"
+  exit 1
+fi
+
+if [[ ${RESTORE_BACKUP^^} == TRUE && -z ${BACKUP_NAME} ]]; then
+  echo "To restore a backup from GCS a backup name is needed"
   exit 1
 fi
 
@@ -63,16 +76,23 @@ function setup_master_db() {
       docker_temp_server_start
     fi
     init_postgres_conf
+    if [[ ${BACKUPS^^} == TRUE && -n ${STORAGE_BUCKET} && -n ${GCP_CREDENTIALS} ]]; then
+      export ARCHIVE_COMMAND="/usr/local/scripts/walg_caller.sh wal-push %p"
+    else
+      export ARCHIVE_COMMAND="cd ."
+    fi
     if [[ ${PG_MASTER^^} == TRUE ]]; then
       echo "Setting up replication on master instance"
       docker_process_init_files /docker-entrypoint-initdb.d/*
-    else
+    elif [[ ${BACKUPS^^} == TRUE ]]; then
       echo "Setting up standalone PostgreSQL instance with WAL archiving"
       {
         echo "wal_level = replica"
         echo "archive_mode = on"
-        echo "archive_command = '/usr/local/scripts/walg_caller.sh wal-push %p'"
+        echo "archive_command = '${ARCHIVE_COMMAND}'"
       } >>"$PGDATA"/postgresql.conf
+    else
+      echo "Setting up standalone PostgreSQL instance"
     fi
     docker_temp_server_stop
     echo 'PostgreSQL init process complete; ready for start up'
@@ -139,12 +159,10 @@ if [[ $1 == postgres ]]; then
     echo "Update postgres slave configuration"
     /docker-entrypoint-initdb.d/setup-slave.sh
   else
-    if [[ ${RESTORE_BACKUP^^} == TRUE && -n ${BACKUP_NAME} ]]; then
-      restore_backup
-    fi
-    init_walg_conf
+    [[ ${RESTORE_BACKUP^^} == TRUE ]] && restore_backup
+    [[ ${BACKUPS^^} == TRUE ]] && init_walg_conf
     setup_master_db
-    take_base_backup
+    [[ ${BACKUPS^^} == TRUE ]] && take_base_backup
     unset PGPASSWORD
   fi
   echo "Running main postgres entrypoint"

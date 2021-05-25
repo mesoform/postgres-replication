@@ -36,10 +36,11 @@ To create a standalone PostgreSQL instance set only the following variables (PG_
       - POSTGRES_DB=testdb                                      # database name
       - PGPORT=5432                                             # master database port; defaults to 5432 if not set
 
-To run backups and WAL archiving to GCS (Google Cloud Storage) set the following variables (backups will be taken on a MASTER or standalone instance):
+To run backups and WAL archiving to GCS (Google Cloud Storage) set the following variables (backups will be taken on a MASTER or STANDALONE instance):
 
-      - STORAGE_BUCKET=gs://postgresql13/wal-g         # To specify the GCS bucket
-      - GCP_CREDENTIALS=/run/secrets/gcp_credentials   # To specify the docker secret with the service account key that has access to the GCS bucket
+      - BACKUPS=true                                            # switch to implement backups; defaults to false
+      - STORAGE_BUCKET=gs://postgresql13/wal-g                  # to specify the GCS bucket
+      - GCP_CREDENTIALS=/run/secrets/gcp_credentials            # to specify the docker secret with the service account key that has access to the GCS bucket
       
 See the example in docker-compose-example.yml to create a PostgreSQL HA master/replica setup with control over backups and WAL archiving to GCS:
 
@@ -67,6 +68,7 @@ services:
       - PG_REP_USER=testrep
       - PG_REP_PASSWORD_FILE=/run/secrets/db_replica_password
       - HBA_ADDRESS=10.0.0.0/8
+      - BACKUPS=true
       - STORAGE_BUCKET=gs://postgresql13/wal-g
       - GCP_CREDENTIALS=/run/secrets/gcp_credentials
     ports:
@@ -140,10 +142,12 @@ docker stack deploy -c docker-compose-example.yml test_pg13ha
 
 ## How to restore from a backup
 
-To restore a backup from GCS (Google Cloud Storage) set the following variables on the docker compose file (backups can be restored on a MASTER or STANDALONE instance):
+To restore a backup from GCS (Google Cloud Storage) also set the following variables on the docker compose file along with the backups ones (backups can be restored on a MASTER or STANDALONE instance):
 
-      - RESTORE_BACKUP=true                 # Set to true
-      - BACKUP_NAME=ab123c4d56e7-28012021   # To specify the name of the GCS backup to be restored (the name corresponds to the <container-id>-<date> -i.e: where/when- the backup was taken)
+      - RESTORE_BACKUP=true                                     # set to true
+      - BACKUP_NAME=ab123c4d56e7-28012021                       # to specify the name of the GCS backup to be restored (the name corresponds to the <container-id>-<date> -i.e: where/when- the backup was taken)
+      - STORAGE_BUCKET=gs://postgresql13/wal-g                  # to specify the GCS bucket backup location
+      - GCP_CREDENTIALS=/run/secrets/gcp_credentials            # to specify the docker secret with the service account key that has access to the GCS bucket
 
 The LATEST base backup available will be restored and all existing WAL archives will be applied to it.
 
@@ -178,6 +182,7 @@ services:
       - PG_REP_USER=testrep
       - PG_REP_PASSWORD_FILE=/run/secrets/db_replica_password
       - HBA_ADDRESS=10.0.0.0/8
+      - BACKUPS=true
       - STORAGE_BUCKET=gs://postgresql13/wal-g
       - GCP_CREDENTIALS=/run/secrets/gcp_credentials
       - RESTORE_BACKUP=true
@@ -316,6 +321,7 @@ services:
       - PGPORT: 5432
       - POSTGRES_PASSWORD_FILE=/run/secrets/db_password 
       - HBA_ADDRESS=10.0.0.0/8
+      - BACKUPS=true
       - STORAGE_BUCKET=gs://backups/postgres/testdb
       - GCP_CREDENTIALS=/run/secrets/gcp_credentials
     secrets:    
@@ -423,6 +429,7 @@ services:
       - PG_REP_USER=testrep
       - PG_REP_PASSWORD_FILE=/run/secrets/testapp_db_replica_password
       - HBA_ADDRESS=10.0.0.0/8
+      - BACKUPS=true
       - STORAGE_BUCKET=gs://backups/postgres/testapp
       - GCP_CREDENTIALS=/run/secrets/gcp_credentials
     secrets:
