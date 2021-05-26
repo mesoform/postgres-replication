@@ -22,8 +22,11 @@ if [[ ${PG_MASTER^^} == TRUE && ${PG_SLAVE^^} == TRUE ]]; then
 fi
 
 if [[ ${BACKUPS^^} == TRUE ]] && [[ -z ${STORAGE_BUCKET} || -z ${GCP_CREDENTIALS} ]]; then
-  echo "GCS bucket and service account credentials are needed to store backups"
-  exit 1
+  echo "GCS bucket and service account credentials are needed to store backups" && exit 1
+elif [[ ${BACKUPS^^} == TRUE && -n ${STORAGE_BUCKET} && -n ${GCP_CREDENTIALS} ]]; then
+  export ARCHIVE_COMMAND="/usr/local/scripts/walg_caller.sh wal-push %p"
+else
+  export ARCHIVE_COMMAND="cd ."
 fi
 
 if [[ ${RESTORE_BACKUP^^} == TRUE && -z ${BACKUP_NAME} ]]; then
@@ -76,11 +79,6 @@ function setup_master_db() {
       docker_temp_server_start
     fi
     init_postgres_conf
-    if [[ ${BACKUPS^^} == TRUE && -n ${STORAGE_BUCKET} && -n ${GCP_CREDENTIALS} ]]; then
-      export ARCHIVE_COMMAND="/usr/local/scripts/walg_caller.sh wal-push %p"
-    else
-      export ARCHIVE_COMMAND="cd ."
-    fi
     if [[ ${PG_MASTER^^} == TRUE ]]; then
       echo "Setting up replication on master instance"
       docker_process_init_files /docker-entrypoint-initdb.d/*
