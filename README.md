@@ -42,7 +42,10 @@ To run backups and WAL archiving to GCS (Google Cloud Storage) set the following
       - STORAGE_BUCKET=gs://postgresql13/wal-g                  # to specify the GCS bucket
       - GCP_CREDENTIALS=/run/secrets/gcp_credentials            # to specify the docker secret with the service account key that has access to the GCS bucket
 
-Note: HA MASTER instances with BACKUPS disabled will store WAL logs locally on the `pg_wal` folder under the PGDATA directory path.
+Note: HA MASTER instances with BACKUPS disabled will only store WAL logs locally on the `pg_wal` folder under the PGDATA directory path. 
+Running a postgres HA cluster without implementing backups is not recommended and is intended only for testing purposes.
+
+## How to create a PostgreSQL HA cluster
 
 See the example in docker-compose-example.yml to create a PostgreSQL HA master/replica setup with control over backups and WAL archiving to GCS:
 

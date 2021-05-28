@@ -26,7 +26,7 @@ if [[ ${BACKUPS^^} == TRUE ]] && [[ -z ${STORAGE_BUCKET} || -z ${GCP_CREDENTIALS
 elif [[ ${BACKUPS^^} == TRUE && -n ${STORAGE_BUCKET} && -n ${GCP_CREDENTIALS} ]]; then
   export ARCHIVE_COMMAND="/usr/local/scripts/walg_caller.sh wal-push %p"
 else
-  export ARCHIVE_COMMAND="cd ."
+  export ARCHIVE_COMMAND="echo \"archiving set to $PGDATA/pg_wal/%f\""
 fi
 
 if [[ ${RESTORE_BACKUP^^} == TRUE && -z ${BACKUP_NAME} ]]; then
